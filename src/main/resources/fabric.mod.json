@@ -1,0 +1,29 @@
+{
+	"schemaVersion": 1,
+	"id": "multiscoreboard",
+	"version": "${version}",
+	"name": "MultiScoreboard",
+	"description": "This mod allows multiple scoreboards to be displayed on the sidebar at once.",
+	"authors": [
+		"Papierkorb2292"
+	],
+	"license": "CC0-1.0",
+	"environment": "*",
+	"entrypoints": { },
+	"mixins": [
+		"multiscoreboard.mixins.json",
+        {
+          "config": "multiscoreboard.client.mixins.json",
+          "environment": "client"
+        }
+	],
+	"depends": {
+		"fabricloader": ">=0.15.0",
+		"minecraft": "~1.20.4",
+		"java": ">=17",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
