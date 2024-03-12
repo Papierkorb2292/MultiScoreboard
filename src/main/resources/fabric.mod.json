@@ -8,6 +8,7 @@
 		"Papierkorb2292"
 	],
 	"license": "CC0-1.0",
+	"icon": "assets/multiscoreboard/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
