@@ -11,6 +11,7 @@ import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import net.papierkorb2292.multiscoreboard.MultiScoreboardSidebarInterface;
+import net.papierkorb2292.multiscoreboard.client.MultiScoreboardClient;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -60,6 +61,10 @@ public abstract class InGameHudMixin {
             )
     )
     private void multiScoreboard$translateSidebarTeamObjective(InGameHud inGameHud, DrawContext context, ScoreboardObjective teamObjective, Operation<Void> op, @Share("scoreboardHeights") LocalRef<Map<ScoreboardObjective, Integer>> scoreboardHeightsRef) {
+        if(!MultiScoreboardClient.useMultiScoreboard()) {
+            op.call(inGameHud, context, teamObjective);
+            return;
+        }
         var scoreboard = Objects.requireNonNull(client.world).getScoreboard();
 
         var teamScoreboardHeight = multiScoreboard$getObjectiveContentRenderHeight(scoreboard, teamObjective);
@@ -87,6 +92,7 @@ public abstract class InGameHudMixin {
             )
     )
     private void multiScoreboard$renderSidebarObjectives(DrawContext context, float tickDelta, CallbackInfo ci, @Local(ordinal = 1) ScoreboardObjective teamObjective, @Share("scoreboardHeights") LocalRef<Map<ScoreboardObjective, Integer>> scoreboardHeightsRef) {
+        if(!MultiScoreboardClient.useMultiScoreboard()) return;
         if(scoreboardHeightsRef.get() == null) {
             var scoreboard = Objects.requireNonNull(client.world).getScoreboard();
             var totalHeight = multiScoreboard$calculateSidebarHeights(scoreboard, scoreboardHeightsRef);

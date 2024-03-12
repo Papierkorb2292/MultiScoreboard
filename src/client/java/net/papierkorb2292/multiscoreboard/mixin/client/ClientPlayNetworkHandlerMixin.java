@@ -7,6 +7,7 @@ import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.ScoreboardDisplaySlot;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import net.papierkorb2292.multiscoreboard.MultiScoreboardSidebarInterface;
+import net.papierkorb2292.multiscoreboard.client.MultiScoreboardClient;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
@@ -21,7 +22,7 @@ public class ClientPlayNetworkHandlerMixin {
             )
     )
     private void multiScoreboard$toggleObjectiveInSidebar(Scoreboard scoreboard, ScoreboardDisplaySlot displaySlot, ScoreboardObjective objective, Operation<Void> op) {
-        if(displaySlot != ScoreboardDisplaySlot.SIDEBAR) {
+        if(!MultiScoreboardClient.useMultiScoreboard() || displaySlot != ScoreboardDisplaySlot.SIDEBAR) {
             op.call(scoreboard, displaySlot, objective);
             return;
         }

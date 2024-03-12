@@ -9,7 +9,14 @@
 	],
 	"license": "CC0-1.0",
 	"environment": "*",
-	"entrypoints": { },
+	"entrypoints": {
+		"main": [
+			"net.papierkorb2292.multiscoreboard.MultiScoreboard"
+		],
+		"client": [
+			"net.papierkorb2292.multiscoreboard.client.MultiScoreboardClient"
+		]
+	},
 	"mixins": [
 		"multiscoreboard.mixins.json",
         {
