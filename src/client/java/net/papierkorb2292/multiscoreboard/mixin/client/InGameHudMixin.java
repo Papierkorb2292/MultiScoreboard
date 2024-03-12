@@ -76,7 +76,8 @@ public abstract class InGameHudMixin {
             at = @At(
                     value = "INVOKE",
                     target = "Lcom/mojang/blaze3d/systems/RenderSystem;enableBlend()V",
-                    ordinal = 0
+                    ordinal = 0,
+                    remap = false
             ),
             slice = @Slice(
                     from = @At(
