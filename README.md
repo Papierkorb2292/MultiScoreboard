@@ -15,6 +15,14 @@ scoreboard again will remove the objective from the sidebar again.
 For the mod to work, it must be installed on both the client and the server.
 Otherwise, scoreboards act like in vanilla.
 
+## Download
+
+You can download this mod on CurseForge (https://www.curseforge.com/minecraft/mc-mods/multiscoreboard)
+or Modrinth (https://modrinth.com/mod/multiscoreboard)
+
+Alternatively, you can build the mod yourself by downloading this repository
+and running `./gradlew build` in the root directory. The built mod will appear in `build/libs`.
+
 ## License
 
 This mod is available under the CC0 license.
