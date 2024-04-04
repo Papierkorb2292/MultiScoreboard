@@ -21,6 +21,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -104,10 +105,12 @@ public abstract class InGameHudMixin {
             context.getMatrices().translate(0, (firstHeight-totalHeight) / 2f, 0);
         }
 
-        for(var objective : scoreboardHeightsRef.get().entrySet()) {
-            renderScoreboardSidebar(context, objective.getKey());
-            context.getMatrices().translate(0, objective.getValue(), 0);
-        }
+        scoreboardHeightsRef.get().entrySet().stream()
+                .sorted(Comparator.comparing(objective -> objective.getKey().getName()))
+                .forEach(objective -> {
+                    renderScoreboardSidebar(context, objective.getKey());
+                    context.getMatrices().translate(0, objective.getValue(), 0);
+                });
 
         context.getMatrices().pop();
     }
