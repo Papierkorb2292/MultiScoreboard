@@ -22,11 +22,16 @@ public class ClientPlayNetworkHandlerMixin {
             )
     )
     private void multiScoreboard$toggleObjectiveInSidebar(Scoreboard scoreboard, ScoreboardDisplaySlot displaySlot, ScoreboardObjective objective, Operation<Void> op) {
-        if(!MultiScoreboardClient.useMultiScoreboard() || displaySlot != ScoreboardDisplaySlot.SIDEBAR) {
+        if(displaySlot != ScoreboardDisplaySlot.SIDEBAR) {
             op.call(scoreboard, displaySlot, objective);
             return;
         }
         var multiScoreboard = ((MultiScoreboardSidebarInterface)scoreboard);
+        if(!MultiScoreboardClient.useMultiScoreboard()) {
+            multiScoreboard.multiScoreboard$getSidebarObjectives().clear();
+            op.call(scoreboard, displaySlot, objective);
+            return;
+        }
         if(multiScoreboard.multiScoreboard$getSidebarObjectives().contains(objective)) {
             multiScoreboard.multiScoreboard$removeObjectiveFromSidebar(objective);
         } else {

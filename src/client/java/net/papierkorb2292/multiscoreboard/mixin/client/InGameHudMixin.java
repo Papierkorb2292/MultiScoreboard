@@ -91,6 +91,31 @@ public abstract class InGameHudMixin {
         context.getMatrices().translate(0, teamScoreboardHeight, 0);
     }
 
+    @ModifyExpressionValue(
+            method = "render",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/scoreboard/Scoreboard;getObjectiveForSlot(Lnet/minecraft/scoreboard/ScoreboardDisplaySlot;)Lnet/minecraft/scoreboard/ScoreboardObjective;",
+                    ordinal = 0
+            ),
+            slice = @Slice(
+                    from = @At(
+                            value = "FIELD",
+                            target = "Lnet/minecraft/scoreboard/ScoreboardDisplaySlot;SIDEBAR:Lnet/minecraft/scoreboard/ScoreboardDisplaySlot;"
+
+                    )
+            )
+    )
+    private ScoreboardObjective multiScoreboard$getSingleScoreboardFromSet(ScoreboardObjective objective) {
+        if(MultiScoreboardClient.useMultiScoreboard() || objective != null) {
+            return objective;
+        }
+        var scoreboard = Objects.requireNonNull(client.world).getScoreboard();
+        var sidebarObjectives = ((MultiScoreboardSidebarInterface)scoreboard).multiScoreboard$getSidebarObjectives();
+        return sidebarObjectives.stream().findFirst().orElse(null);
+    }
+
+
     @Inject(
             method = "render",
             at = @At(
