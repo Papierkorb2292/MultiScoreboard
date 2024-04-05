@@ -249,7 +249,8 @@ public class ServerNbtSidebarManager extends PersistentState {
         private void updateNbt(String name) {
             List<NbtElement> newNBT;
             try {
-                newNBT = path.get(nbtProvider.getNbt());
+                var fullNbt = nbtProvider.getNbt();
+                newNBT = fullNbt == null ? Collections.emptyList() : path.get(fullNbt);
             } catch(CommandSyntaxException e) {
                 newNBT = Collections.emptyList();
             }
