@@ -1,3 +1,8 @@
 {
-  "multiscoreboard.commands.scoreboard.objectives.display.removed": "Removed objective %s from display slot %s"
+  "multiscoreboard.commands.scoreboard.objectives.display.removed": "Removed objective %s from display slot %s",
+  "multiscoreboard.commands.data.multiscoreboard.add": "Added NBT Sidebar %s",
+  "multiscoreboard.commands.data.multiscoreboard.remove": "Removed NBT Sidebar %s",
+  "multiscoreboard.commands.data.multiscoreboard.name_not_found": "No NBT Sidebar with the name %s exists",
+  "multiscoreboard.commands.data.multiscoreboard.remove_data_object": "Removed %s NBT Sidebars",
+  "multiScoreboard.sidebarNbt.noData": "No data"
 }

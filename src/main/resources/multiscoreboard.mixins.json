@@ -1,15 +1,20 @@
 {
-	"required": true,
-	"package": "net.papierkorb2292.multiscoreboard.mixin",
-	"compatibilityLevel": "JAVA_17",
-	"mixins": [
-		"PlayerManagerMixin",
-		"ScoreboardCommandMixin",
-		"ScoreboardMixin",
-		"ScoreboardStateMixin",
-		"ServerScoreboardMixin"
-	],
-	"injectors": {
-		"defaultRequire": 1
+  "required": true,
+  "package": "net.papierkorb2292.multiscoreboard.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "BlockDataObjectAccessor",
+    "DataCommandMixin",
+    "EntityDataObjectAccessor",
+    "MinecraftServerMixin",
+    "PlayerManagerMixin",
+    "ScoreboardCommandMixin",
+    "ScoreboardMixin",
+    "ScoreboardStateMixin",
+    "ServerScoreboardMixin",
+    "StorageDataObjectAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
 	}
 }
