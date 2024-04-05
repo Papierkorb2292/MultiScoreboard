@@ -4,5 +4,8 @@
   "multiscoreboard.commands.data.multiscoreboard.remove": "Removed NBT Sidebar %s",
   "multiscoreboard.commands.data.multiscoreboard.name_not_found": "No NBT Sidebar with the name %s exists",
   "multiscoreboard.commands.data.multiscoreboard.remove_data_object": "Removed %s NBT Sidebars",
-  "multiScoreboard.sidebarNbt.noData": "No data"
+  "multiScoreboard.sidebarNbt.noData": "No data",
+  "key.multiscoreboard.scroll_up": "Scroll up scoreboard list",
+  "key.multiscoreboard.scroll_down": "Scroll down scoreboard list",
+  "category.multiscoreboard": "MultiScoreboard"
 }

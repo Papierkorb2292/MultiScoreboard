@@ -2,17 +2,15 @@ package net.papierkorb2292.multiscoreboard.client;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.scoreboard.ScoreboardObjective;
+import net.papierkorb2292.multiscoreboard.mixin.client.InGameHudAccessor;
 
-import java.util.function.BiConsumer;
-
-public class SidebarObjectiveRenderable implements SidebarRenderable{
+public class SidebarObjectiveRenderable implements SidebarRenderable {
     private final ScoreboardObjective objective;
 
-    private final BiConsumer<DrawContext, ScoreboardObjective> objectiveRenderer;
-    public SidebarObjectiveRenderable(ScoreboardObjective objective, BiConsumer<DrawContext, ScoreboardObjective> objectiveRenderer) {
+    public SidebarObjectiveRenderable(ScoreboardObjective objective) {
         this.objective = objective;
-        this.objectiveRenderer = objectiveRenderer;
     }
 
     @Override
@@ -21,8 +19,8 @@ public class SidebarObjectiveRenderable implements SidebarRenderable{
     }
 
     @Override
-    public void render(DrawContext context) {
-        objectiveRenderer.accept(context, objective);
+    public void render(DrawContext context, InGameHud inGameHud) {
+        ((InGameHudAccessor)inGameHud).callRenderScoreboardSidebar(context, objective);
     }
 
     @Override

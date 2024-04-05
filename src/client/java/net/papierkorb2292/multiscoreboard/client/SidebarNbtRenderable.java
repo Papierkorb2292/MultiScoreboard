@@ -2,6 +2,7 @@ package net.papierkorb2292.multiscoreboard.client;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.nbt.*;
 import net.minecraft.nbt.visitor.NbtElementVisitor;
 import net.minecraft.text.MutableText;
@@ -39,7 +40,7 @@ public class SidebarNbtRenderable implements SidebarRenderable {
     }
 
     @Override
-    public void render(DrawContext context) {
+    public void render(DrawContext context, InGameHud inGameHud) {
         var textRenderer = MinecraftClient.getInstance().textRenderer;
         var title = Text.of(nbtSidebarName);
         var entries = new ArrayList<List<TopLevelNbtVisitor.Entry>>();
