@@ -1,7 +1,7 @@
 # MultiScoreboard Minecraft Mod
 
 This Minecraft Fabric mod allows you to view multiple scoreboards
-on the sidebar at the same time!
+and nbt data on the sidebar at the same time!
 
 ## Usage
 
