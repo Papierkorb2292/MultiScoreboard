@@ -34,6 +34,7 @@ public class ClientPlayNetworkHandlerMixin {
         }
         if(multiScoreboard.multiScoreboard$getSidebarObjectives().contains(objective)) {
             multiScoreboard.multiScoreboard$removeObjectiveFromSidebar(objective);
+            MultiScoreboardClient.clampScrollTranslation();
         } else {
             op.call(scoreboard, displaySlot, objective);
         }

@@ -14,6 +14,7 @@ import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.ScoreboardDisplaySlot;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.scoreboard.Team;
+import net.minecraft.util.math.MathHelper;
 import net.papierkorb2292.multiscoreboard.MultiScoreboardSidebarInterface;
 import net.papierkorb2292.multiscoreboard.RemoveNbtSidebarS2CPacket;
 import net.papierkorb2292.multiscoreboard.SetNbtSidebarS2CPacket;
@@ -44,6 +45,7 @@ public class MultiScoreboardClient implements ClientModInitializer {
         });
         ClientPlayNetworking.registerGlobalReceiver(RemoveNbtSidebarS2CPacket.TYPE, (packet, player, responseSender) -> {
             nbtSidebars.remove(packet.nbtSidebarName);
+            clampScrollTranslation();
         });
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             useMultiScoreboard = false;
@@ -129,6 +131,25 @@ public class MultiScoreboardClient implements ClientModInitializer {
                 sidebarScrollTranslation = Math.max(sidebarScrollTranslation - scrollAmount, -maxTranslation);
             }
         });
+    }
+
+    public static void clampScrollTranslation() {
+        var player = Objects.requireNonNull(MinecraftClient.getInstance().player);
+        var scoreboard = player.getWorld().getScoreboard();
+        Team team = scoreboard.getScoreHolderTeam(player.getNameForScoreboard());
+        ScoreboardDisplaySlot scoreboardDisplaySlot;
+        ScoreboardObjective teamObjective = null;
+        if (team != null && (scoreboardDisplaySlot = ScoreboardDisplaySlot.fromFormatting(team.getColor())) != null) {
+            teamObjective = scoreboard.getObjectiveForSlot(scoreboardDisplaySlot);
+        }
+        var calculatedHeights = calculateSidebarHeights(scoreboard, teamObjective);
+        var totalHeight = calculatedHeights.getFirst();
+        var maxTranslation = (totalHeight - MinecraftClient.getInstance().getWindow().getScaledHeight())/2 + maxTranslationBoundary;
+        if(maxTranslation < 0) {
+            sidebarScrollTranslation = 0;
+            return;
+        }
+        sidebarScrollTranslation = MathHelper.clamp(sidebarScrollTranslation, -maxTranslation, maxTranslation);
     }
 
     public static boolean useMultiScoreboard() {
