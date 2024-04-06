@@ -87,6 +87,11 @@ public class SidebarNbtRenderable implements SidebarRenderable {
                 context.drawText(textRenderer, entry.key, leftX, entryY, Colors.WHITE, false);
                 context.drawText(textRenderer, entry.value, leftX + maxWidth - valueWidth, entryY, Colors.WHITE, false);
             }
+            if(i != entryCount) {
+                int separationY = lowerY - (entryCount - i) * textRenderer.fontHeight;
+                context.fill(leftX - 2, separationY - 1, rightX, separationY, 0xAA666666);
+            }
+
         }
     }
 
