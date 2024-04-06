@@ -268,6 +268,8 @@ public class SidebarNbtRenderable implements SidebarRenderable {
 
         @Override
         public void visitString(NbtString element) {
+            var allowedEntries = getNextEntryCount();
+            if(allowedEntries == 0) return;
             var nestedVisitor = new NestedNbtVisitor();
             nestedVisitor.visitString(element);
             entries.add(List.of(new Entry(null, nestedVisitor.text)));
@@ -275,6 +277,8 @@ public class SidebarNbtRenderable implements SidebarRenderable {
 
         @Override
         public void visitByte(NbtByte element) {
+            var allowedEntries = getNextEntryCount();
+            if(allowedEntries == 0) return;
             var nestedVisitor = new NestedNbtVisitor();
             nestedVisitor.visitByte(element);
             entries.add(List.of(new Entry(null, nestedVisitor.text)));
@@ -282,6 +286,8 @@ public class SidebarNbtRenderable implements SidebarRenderable {
 
         @Override
         public void visitShort(NbtShort element) {
+            var allowedEntries = getNextEntryCount();
+            if(allowedEntries == 0) return;
             var nestedVisitor = new NestedNbtVisitor();
             nestedVisitor.visitShort(element);
             entries.add(List.of(new Entry(null, nestedVisitor.text)));
@@ -289,6 +295,8 @@ public class SidebarNbtRenderable implements SidebarRenderable {
 
         @Override
         public void visitInt(NbtInt element) {
+            var allowedEntries = getNextEntryCount();
+            if(allowedEntries == 0) return;
             var nestedVisitor = new NestedNbtVisitor();
             nestedVisitor.visitInt(element);
             entries.add(List.of(new Entry(null, nestedVisitor.text)));
@@ -296,6 +304,8 @@ public class SidebarNbtRenderable implements SidebarRenderable {
 
         @Override
         public void visitLong(NbtLong element) {
+            var allowedEntries = getNextEntryCount();
+            if(allowedEntries == 0) return;
             var nestedVisitor = new NestedNbtVisitor();
             nestedVisitor.visitLong(element);
             entries.add(List.of(new Entry(null, nestedVisitor.text)));
@@ -303,6 +313,8 @@ public class SidebarNbtRenderable implements SidebarRenderable {
 
         @Override
         public void visitFloat(NbtFloat element) {
+            var allowedEntries = getNextEntryCount();
+            if(allowedEntries == 0) return;
             var nestedVisitor = new NestedNbtVisitor();
             nestedVisitor.visitFloat(element);
             entries.add(List.of(new Entry(null, nestedVisitor.text)));
@@ -310,6 +322,8 @@ public class SidebarNbtRenderable implements SidebarRenderable {
 
         @Override
         public void visitDouble(NbtDouble element) {
+            var allowedEntries = getNextEntryCount();
+            if(allowedEntries == 0) return;
             var nestedVisitor = new NestedNbtVisitor();
             nestedVisitor.visitDouble(element);
             entries.add(List.of(new Entry(null, nestedVisitor.text)));
