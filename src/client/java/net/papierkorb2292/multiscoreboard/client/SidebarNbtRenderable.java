@@ -125,7 +125,7 @@ public class SidebarNbtRenderable implements SidebarRenderable {
 
     private static class NestedNbtVisitor implements NbtElementVisitor {
 
-        private static final int MAX_ENTRIES = 3;
+        private int entriesLeft = 3;
 
         public MutableText text = Text.literal("");
 
@@ -215,37 +215,39 @@ public class SidebarNbtRenderable implements SidebarRenderable {
                         .styled(style -> style.withFormatting(TYPE_SUFFIX_FORMATTING))
                 ).append(Text.literal("; "));
             }
-            for (int i = 0; i < Math.min(element.size(), MAX_ENTRIES); i++) {
+            for (int i = 0; i < element.size(); i++) {
+                if(entriesLeft <= 0) {
+                    text.append(Text.literal("...]"));
+                    return;
+                }
                 element.get(i).accept(this);
+                entriesLeft--;
                 if (i < element.size() - 1) {
                     text.append(Text.literal(", "));
                 }
             }
-            if(element.size() > MAX_ENTRIES) {
-                text.append(Text.literal("...]"));
-            } else {
-                text.append(Text.literal("]"));
-            }
+            text.append(Text.literal("]"));
         }
 
         @Override
         public void visitCompound(NbtCompound compound) {
             text.append(Text.literal("{"));
             int i = 0;
-            var keys = compound.getKeys().stream().sorted().limit(MAX_ENTRIES).iterator();
+            var keys = compound.getKeys().stream().sorted().iterator();
             while(keys.hasNext()) {
                 var key = keys.next();
+                if(entriesLeft <= 0) {
+                    text.append(Text.literal("...}"));
+                    return;
+                }
                 text.append(getTagText(key).append(Text.of(": ")));
                 Objects.requireNonNull(compound.get(key)).accept(this);
+                entriesLeft--;
                 if (i++ < compound.getKeys().size() - 1) {
                     text.append(Text.literal(", "));
                 }
             }
-            if(compound.getKeys().size() > MAX_ENTRIES) {
-                text.append(Text.literal("...}"));
-            } else {
-                text.append(Text.literal("}"));
-            }
+            text.append(Text.literal("}"));
         }
 
         @Override
