@@ -26,8 +26,8 @@ If `<name>` is not specified, a default name is build based on the data object a
 
 The command `/data multiscoreboard remove <name>` removes the nbt sidebar with the specified name.
 
-The command `/data multiscoreboard removeAll (block <targetPos>|entity <target>|storage <target>)`
-removes all nbt sidebars for the specified data object.
+The command `/data multiscoreboard removeAll [(block <targetPos>|entity <target>|storage <target>)]`
+removes all nbt sidebars for the specified data object, or, if no data object is specified, all existing nbt sidebars.
 
 ### Scrolling
 

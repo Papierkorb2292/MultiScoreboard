@@ -60,7 +60,11 @@ public abstract class DataCommandMixin {
                                         builder.executes(context -> multiScoreboard$removeDataObjectSidebar(
                                                 context.getSource(),
                                                 type.getObject(context)
-                                        ))))
+                                        )))
+                                .executes(context ->
+                                        multiScoreboard$removeAllNbtSidebars(context.getSource())
+                                )
+                        )
                         .then(CommandManager.literal("remove")
                                 .then(CommandManager.argument("name", StringArgumentType.string())
                                         .suggests((CommandContext<ServerCommandSource> context, SuggestionsBuilder builder) -> {
@@ -106,5 +110,13 @@ public abstract class DataCommandMixin {
         }
         source.sendFeedback(() -> Text.translatable("multiscoreboard.commands.data.multiscoreboard.remove", name), false);
         return 1;
+    }
+
+    @Unique
+    private static int multiScoreboard$removeAllNbtSidebars(ServerCommandSource source) {
+        var nbtSidebarManager = ((ServerNbtSidebarManagerContainer)source.getServer()).multiScoreboard$getNbtSidebarManager();
+        var removedCount = nbtSidebarManager.removeAllEntries();
+        source.sendFeedback(() -> Text.translatable("multiscoreboard.commands.data.multiscoreboard.remove_data_object", removedCount), false);
+        return removedCount;
     }
 }

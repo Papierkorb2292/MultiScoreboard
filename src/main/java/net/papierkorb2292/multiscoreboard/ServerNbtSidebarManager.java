@@ -117,6 +117,19 @@ public class ServerNbtSidebarManager extends PersistentState {
         return entryCount - entries.size();
     }
 
+    public int removeAllEntries() {
+        var count = entries.size();
+        for(var name : entries.keySet()) {
+            var removedPacket = new RemoveNbtSidebarS2CPacket(name);
+            for(var player : server.getPlayerManager().getPlayerList()) {
+                ServerPlayNetworking.send(player, removedPacket);
+            }
+        }
+        entries.clear();
+        markDirty();
+        return count;
+    }
+
     public String getEntryNameIfMatches(String name, DataCommandObject dataObject, NbtPathArgumentType.NbtPath path) {
         if(name == null) {
             for(var entry : entries.entrySet()) {
