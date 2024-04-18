@@ -27,13 +27,25 @@ public class ScoreboardStateMixin {
             at = @At("TAIL")
     )
     private void multiScoreboard$readSidebarObjectivesNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries, CallbackInfoReturnable<ScoreboardState> cir) {
-        var list = nbt.getList("SidebarSlotObjectives", NbtElement.STRING_TYPE);
-        if(list == null) return;
+        var sidebarSlotObjectives = nbt.getList("SidebarSlotObjectives", NbtElement.STRING_TYPE);
+        if(sidebarSlotObjectives != null) {
+            for (NbtElement element : sidebarSlotObjectives) {
+                var objective = scoreboard.getNullableObjective(element.asString());
+                if (objective != null) {
+                    scoreboard.setObjectiveSlot(ScoreboardDisplaySlot.SIDEBAR, objective);
+                }
+            }
+        }
 
-        for(NbtElement element : list) {
-            var objective = scoreboard.getNullableObjective(element.asString());
-            if(objective != null) {
-                scoreboard.setObjectiveSlot(ScoreboardDisplaySlot.SIDEBAR, objective);
+        var singleScoreSidebarsNbt = nbt.getCompound("SingleScoreSidebars");
+        if(singleScoreSidebarsNbt != null) {
+            for(var entry : singleScoreSidebarsNbt.getKeys()) {
+                var objective = scoreboard.getNullableObjective(entry);
+                if(objective == null) continue;
+                var scoreHolders = singleScoreSidebarsNbt.getList(entry, NbtElement.STRING_TYPE);
+                for(NbtElement element : scoreHolders) {
+                    ((MultiScoreboardSidebarInterface)scoreboard).multiScoreboard$toggleSingleScoreSidebar(objective, element.asString());
+                }
             }
         }
     }
@@ -43,12 +55,21 @@ public class ScoreboardStateMixin {
             at = @At("HEAD")
     )
     private void multiScoreboard$writeSidebarObjectivesNbt(NbtCompound nbt, CallbackInfo ci) {
-        var list = new NbtList();
-
+        var sidebarSlotObjectives = new NbtList();
         for(var objective : ((MultiScoreboardSidebarInterface)scoreboard).multiScoreboard$getSidebarObjectives()) {
-            list.add(NbtString.of(objective.getName()));
+            sidebarSlotObjectives.add(NbtString.of(objective.getName()));
         }
+        nbt.put("SidebarSlotObjectives", sidebarSlotObjectives);
 
-        nbt.put("SidebarSlotObjectives", list);
+        var singleScoreSidebars = ((MultiScoreboardSidebarInterface)scoreboard).multiScoreboard$getSingleScoreSidebars();
+        var singleScoreSidebarsNbt = new NbtCompound();
+        for(var entry : singleScoreSidebars.entrySet()) {
+            var scoreHolders = new NbtList();
+            for(var scoreHolder : entry.getValue()) {
+                scoreHolders.add(NbtString.of(scoreHolder));
+            }
+            singleScoreSidebarsNbt.put(entry.getKey().getName(), scoreHolders);
+        }
+        nbt.put("SingleScoreSidebars", singleScoreSidebarsNbt);
     }
 }

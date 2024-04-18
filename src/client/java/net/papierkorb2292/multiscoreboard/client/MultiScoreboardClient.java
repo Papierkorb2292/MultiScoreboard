@@ -15,10 +15,7 @@ import net.minecraft.scoreboard.ScoreboardDisplaySlot;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.util.math.MathHelper;
-import net.papierkorb2292.multiscoreboard.MultiScoreboardSidebarInterface;
-import net.papierkorb2292.multiscoreboard.RemoveNbtSidebarS2CPacket;
-import net.papierkorb2292.multiscoreboard.SetNbtSidebarS2CPacket;
-import net.papierkorb2292.multiscoreboard.SetUseMultiScoreboardS2CPacket;
+import net.papierkorb2292.multiscoreboard.*;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
@@ -26,10 +23,10 @@ import java.util.stream.Stream;
 
 public class MultiScoreboardClient implements ClientModInitializer {
     private static boolean useMultiScoreboard = false;
-    private static Map<String, List<NbtElement>> nbtSidebars = new HashMap<>();
+    private static final Map<String, List<NbtElement>> nbtSidebars = new HashMap<>();
     private static int sidebarScrollTranslation = 0;
-    private static int scrollAmount = 10;
-    private static int maxTranslationBoundary = 10;
+    private static final int scrollAmount = 10;
+    private static final int maxTranslationBoundary = 10;
     private static KeyBinding scrollUpKeyBinding;
     private static KeyBinding scrollDownKeyBinding;
 
@@ -46,6 +43,12 @@ public class MultiScoreboardClient implements ClientModInitializer {
         ClientPlayNetworking.registerGlobalReceiver(RemoveNbtSidebarS2CPacket.ID, (packet, context) -> {
             nbtSidebars.remove(packet.nbtSidebarName());
             clampScrollTranslation();
+        });
+        ClientPlayNetworking.registerGlobalReceiver(ToggleSingleScoreSidebarS2CPacket.ID, (packet, context) -> {
+            var scoreboard = context.player().getScoreboard();
+            var objective = scoreboard.getNullableObjective(packet.objective());
+            if(objective == null) return;
+            ((MultiScoreboardSidebarInterface)scoreboard).multiScoreboard$toggleSingleScoreSidebar(objective, packet.score());
         });
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             useMultiScoreboard = false;
@@ -164,14 +167,24 @@ public class MultiScoreboardClient implements ClientModInitializer {
         var scoreboardHeights = new HashMap<SidebarRenderable, Integer>();
 
         var sidebarObjectives = ((MultiScoreboardSidebarInterface)scoreboard).multiScoreboard$getSidebarObjectives();
+        var singleScoreSidebars = ((MultiScoreboardSidebarInterface)scoreboard).multiScoreboard$getSingleScoreSidebars();
         var sidebarNbt = MultiScoreboardClient.getNbtSidebars();
 
-        var totalHeight = Stream.concat(
-                sidebarObjectives.stream()
-                        .map(SidebarObjectiveRenderable::new),
+        Stream<SidebarRenderable> renderablesStream = sidebarObjectives.stream()
+                .map(SidebarObjectiveRenderable::new);
+        renderablesStream = Stream.concat(
+                renderablesStream,
                 sidebarNbt.entrySet().stream()
                         .map(entry -> new SidebarNbtRenderable(entry.getKey(), entry.getValue()))
-        ).mapToInt(renderable -> {
+        );
+        renderablesStream = Stream.concat(
+                renderablesStream,
+                singleScoreSidebars.keySet().stream()
+                        .filter(key -> !sidebarObjectives.contains(key))
+                        .map(SidebarSingleScoresRenderable::new)
+        );
+
+        var totalHeight = renderablesStream.mapToInt(renderable -> {
             var height = renderable.calculateHeight();
             scoreboardHeights.put(renderable, height);
             return height;

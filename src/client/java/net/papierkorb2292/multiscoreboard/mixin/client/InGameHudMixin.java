@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Comparator;
@@ -99,5 +100,18 @@ public abstract class InGameHudMixin {
     )
     private int command_crafter$removeSidebarHeightOffset(int fontHeight) {
         return MultiScoreboardClient.useMultiScoreboard() ? fontHeight * 3 : fontHeight;
+    }
+
+    @ModifyVariable(
+            method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/scoreboard/ScoreboardObjective;)V",
+            at = @At("LOAD:LAST"),
+            ordinal = 1
+    )
+    private int command_crafter$applyAdditionalScoreboardMaxWidth(int maxWidth) {
+        if(SidebarObjectiveRenderable.CURRENT_MAX_WIDTH.get() != null) {
+            maxWidth = Math.max(SidebarObjectiveRenderable.CURRENT_MAX_WIDTH.get(), maxWidth);
+            SidebarObjectiveRenderable.CURRENT_MAX_WIDTH.set(maxWidth);
+        }
+        return maxWidth;
     }
 }

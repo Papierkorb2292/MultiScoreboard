@@ -10,14 +10,15 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Mixin(Scoreboard.class)
 public class ScoreboardMixin implements MultiScoreboardSidebarInterface {
 
     @Unique
     protected final Set<ScoreboardObjective> multiScoreboard$sidebarObjectives = new HashSet<>();
+    @Unique
+    protected final Map<ScoreboardObjective, Set<String>> multiScoreboard$singleScoreSidebars = new HashMap<>();
 
     @Override
     public void multiScoreboard$removeObjectiveFromSidebar(ScoreboardObjective objective) {
@@ -25,8 +26,26 @@ public class ScoreboardMixin implements MultiScoreboardSidebarInterface {
     }
 
     @Override
+    public boolean multiScoreboard$toggleSingleScoreSidebar(ScoreboardObjective objective, String scoreHolder) {
+        var singleScoreSidebars = multiScoreboard$singleScoreSidebars.computeIfAbsent(objective, k -> new HashSet<>());
+        if(singleScoreSidebars.contains(scoreHolder)) {
+            singleScoreSidebars.remove(scoreHolder);
+            if(singleScoreSidebars.isEmpty())
+                multiScoreboard$singleScoreSidebars.remove(objective);
+            return false;
+        }
+        singleScoreSidebars.add(scoreHolder);
+        return true;
+    }
+
+    @Override
     public Set<ScoreboardObjective> multiScoreboard$getSidebarObjectives() {
         return multiScoreboard$sidebarObjectives;
+    }
+
+    @Override
+    public Map<ScoreboardObjective, Set<String>> multiScoreboard$getSingleScoreSidebars() {
+        return multiScoreboard$singleScoreSidebars;
     }
 
     @Inject(
@@ -51,5 +70,6 @@ public class ScoreboardMixin implements MultiScoreboardSidebarInterface {
     )
     private void multiScoreboard$removeSidebarObjective(ScoreboardObjective objective, CallbackInfo ci) {
         multiScoreboard$sidebarObjectives.remove(objective);
+        multiScoreboard$singleScoreSidebars.remove(objective);
     }
 }
