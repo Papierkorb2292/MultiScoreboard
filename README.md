@@ -5,6 +5,9 @@ and nbt data on the sidebar at the same time!
 
 ## Usage
 
+For the mod to work, it must be installed on both the client and the server.
+Otherwise, scoreboards act like in vanilla.
+
 ### Scoreboards
 
 To view multiple objectives at once, simply call
@@ -14,8 +17,8 @@ scoreboard again will remove the objective from the sidebar again.
 
 `/scoreboard objectives setdisplay sidebar` still clears the sidebar.
 
-For the mod to work, it must be installed on both the client and the server.
-Otherwise, scoreboards act like in vanilla.
+It is also possible to add individual scores to the
+sidebar using `/scoreboard objectives setdisplay sidebarSingle <objective> <target>`
 
 ### Nbt Sidebar
 
