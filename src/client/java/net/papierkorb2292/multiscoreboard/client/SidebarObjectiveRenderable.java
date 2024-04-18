@@ -36,7 +36,7 @@ public class SidebarObjectiveRenderable implements SidebarRenderable {
     }
 
     private int calculateVanillaEntriesHeight() {
-        return objective.getScoreboard().getScoreboardEntries(objective).size() * MinecraftClient.getInstance().textRenderer.fontHeight;
+        return Math.min(15, objective.getScoreboard().getScoreboardEntries(objective).size()) * MinecraftClient.getInstance().textRenderer.fontHeight;
     }
 
     @Override
