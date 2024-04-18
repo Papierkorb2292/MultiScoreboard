@@ -37,14 +37,14 @@ public class MultiScoreboardClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        ClientPlayNetworking.registerGlobalReceiver(SetUseMultiScoreboardS2CPacket.TYPE, (packet, player, responseSender) -> {
-            useMultiScoreboard = packet.useMultiScoreboard;
+        ClientPlayNetworking.registerGlobalReceiver(SetUseMultiScoreboardS2CPacket.ID, (packet, context) -> {
+            useMultiScoreboard = packet.useMultiScoreboard();
         });
-        ClientPlayNetworking.registerGlobalReceiver(SetNbtSidebarS2CPacket.TYPE, (packet, player, responseSender) -> {
-            nbtSidebars.put(packet.nbtSidebarName, packet.nbt);
+        ClientPlayNetworking.registerGlobalReceiver(SetNbtSidebarS2CPacket.ID, (packet, context) -> {
+            nbtSidebars.put(packet.nbtSidebarName(), packet.nbt());
         });
-        ClientPlayNetworking.registerGlobalReceiver(RemoveNbtSidebarS2CPacket.TYPE, (packet, player, responseSender) -> {
-            nbtSidebars.remove(packet.nbtSidebarName);
+        ClientPlayNetworking.registerGlobalReceiver(RemoveNbtSidebarS2CPacket.ID, (packet, context) -> {
+            nbtSidebars.remove(packet.nbtSidebarName());
             clampScrollTranslation();
         });
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {

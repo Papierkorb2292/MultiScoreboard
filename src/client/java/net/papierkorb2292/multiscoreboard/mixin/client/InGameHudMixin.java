@@ -10,7 +10,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.scoreboard.ScoreboardObjective;
-import net.papierkorb2292.multiscoreboard.MultiScoreboardSidebarInterface;
 import net.papierkorb2292.multiscoreboard.client.MultiScoreboardClient;
 import net.papierkorb2292.multiscoreboard.client.SidebarObjectiveRenderable;
 import net.papierkorb2292.multiscoreboard.client.SidebarRenderable;
@@ -19,7 +18,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Comparator;
@@ -32,7 +30,7 @@ public abstract class InGameHudMixin {
     @Shadow @Final private MinecraftClient client;
 
     @WrapOperation(
-            method = "render",
+            method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/DrawContext;F)V",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/gui/hud/InGameHud;renderScoreboardSidebar(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/scoreboard/ScoreboardObjective;)V"
@@ -56,45 +54,9 @@ public abstract class InGameHudMixin {
         context.getMatrices().translate(0, teamScoreboardHeight, 0);
     }
 
-    @ModifyExpressionValue(
-            method = "render",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/scoreboard/Scoreboard;getObjectiveForSlot(Lnet/minecraft/scoreboard/ScoreboardDisplaySlot;)Lnet/minecraft/scoreboard/ScoreboardObjective;",
-                    ordinal = 0
-            ),
-            slice = @Slice(
-                    from = @At(
-                            value = "FIELD",
-                            target = "Lnet/minecraft/scoreboard/ScoreboardDisplaySlot;SIDEBAR:Lnet/minecraft/scoreboard/ScoreboardDisplaySlot;"
-
-                    )
-            )
-    )
-    private ScoreboardObjective multiScoreboard$getSingleScoreboardFromSet(ScoreboardObjective objective) {
-        if(MultiScoreboardClient.useMultiScoreboard() || objective != null) {
-            return objective;
-        }
-        var scoreboard = Objects.requireNonNull(client.world).getScoreboard();
-        var sidebarObjectives = ((MultiScoreboardSidebarInterface)scoreboard).multiScoreboard$getSidebarObjectives();
-        return sidebarObjectives.stream().findFirst().orElse(null);
-    }
-
-
     @Inject(
-            method = "render",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lcom/mojang/blaze3d/systems/RenderSystem;enableBlend()V",
-                    ordinal = 0,
-                    remap = false
-            ),
-            slice = @Slice(
-                    from = @At(
-                            value = "INVOKE",
-                            target = "Lnet/minecraft/client/gui/hud/InGameHud;renderScoreboardSidebar(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/scoreboard/ScoreboardObjective;)V"
-                    )
-            )
+            method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/DrawContext;F)V",
+            at = @At("TAIL")
     )
     private void multiScoreboard$renderSidebarObjectives(DrawContext context, float tickDelta, CallbackInfo ci, @Local(ordinal = 1) ScoreboardObjective teamObjective, @Share("sidebarHeights") LocalRef<Map<SidebarRenderable, Integer>> sidebarHeightsRef) {
         if(!MultiScoreboardClient.useMultiScoreboard()) return;
