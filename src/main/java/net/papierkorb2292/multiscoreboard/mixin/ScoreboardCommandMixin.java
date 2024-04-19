@@ -65,7 +65,7 @@ public class ScoreboardCommandMixin {
             )
     )
     private static LiteralArgumentBuilder<ServerCommandSource> multiScoreboard$addSetDisplaySingleScoreCommand(LiteralArgumentBuilder<ServerCommandSource> builder) {
-        return builder.then(CommandManager.literal("sidebarSingle")
+        return builder.then(CommandManager.literal("indivSidebar")
                 .then(CommandManager.argument("objective", ScoreboardObjectiveArgumentType.scoreboardObjective())
                         .then(CommandManager.argument("target", ScoreHolderArgumentType.scoreHolder())
                                 .executes(context -> {
@@ -73,10 +73,10 @@ public class ScoreboardCommandMixin {
                                     var target = ScoreHolderArgumentType.getScoreHolder(context, "target").getNameForScoreboard();
                                     var added = ((MultiScoreboardSidebarInterface)context.getSource().getServer().getScoreboard()).multiScoreboard$toggleSingleScoreSidebar(objective, target);
                                     if (added) {
-                                        context.getSource().sendFeedback(() -> Text.translatable("multiscoreboard.commands.scoreboard.objectives.display.sidebarSingle.added", target, objective.getDisplayName()), false);
+                                        context.getSource().sendFeedback(() -> Text.translatable("multiscoreboard.commands.scoreboard.objectives.display.indivSidebar.added", target, objective.getDisplayName()), false);
                                         return 1;
                                     }
-                                    context.getSource().sendFeedback(() -> Text.translatable("multiscoreboard.commands.scoreboard.objectives.display.sidebarSingle.removed", target, objective.getDisplayName()), false);
+                                    context.getSource().sendFeedback(() -> Text.translatable("multiscoreboard.commands.scoreboard.objectives.display.indivSidebar.removed", target, objective.getDisplayName()), false);
                                     return -1;
                                 }))));
     }
