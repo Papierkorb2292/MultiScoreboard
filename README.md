@@ -17,8 +17,11 @@ scoreboard again will remove the objective from the sidebar again.
 
 `/scoreboard objectives setdisplay sidebar` still clears the sidebar.
 
-It is also possible to add individual scores to the
-sidebar using `/scoreboard objectives setdisplay indivSidebar <objective> <target>`
+It is also possible to display individual scores to the
+sidebar using `/scoreboard objectives setdisplay indivSidebar [<objective>] [<target>]`:
+If both `objective` and `target` are specified, the individual score is toggled for the sidebar.
+If only `objective` is specified, all individual scores of that objective are removed from the sidebar.
+If neither `objective` nor `target` is specified, all individual scores are removed from the sidebar.
 
 ### Nbt Sidebar
 

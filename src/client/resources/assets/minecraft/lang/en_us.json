@@ -1,6 +1,9 @@
 {
   "multiscoreboard.commands.scoreboard.objectives.display.removed": "Removed objective %s from display slot %s",
   "multiscoreboard.commands.scoreboard.objectives.display.indivSidebar.removed": "Score %s from objective %s was removed from sidebar",
+  "multiscoreboard.commands.scoreboard.objectives.display.indivSidebar.removed.none": "No single sidebar scores are displayed for objective %s",
+  "multiscoreboard.commands.scoreboard.objectives.display.indivSidebar.removed.count": "%s single scores from objective %s were removed from sidebar",
+  "multiscoreboard.commands.scoreboard.objectives.display.indivSidebar.removedAll": "%s single scores were removed from sidebar",
   "multiscoreboard.commands.scoreboard.objectives.display.indivSidebar.added": "Score %s from objective %s was added to sidebar",
   "multiscoreboard.commands.data.multiscoreboard.add": "Added NBT Sidebar %s",
   "multiscoreboard.commands.data.multiscoreboard.remove": "Removed NBT Sidebar %s",

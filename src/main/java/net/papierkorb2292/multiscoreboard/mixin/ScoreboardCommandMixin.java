@@ -20,6 +20,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.ArrayList;
+
 @Mixin(ScoreboardCommand.class)
 public class ScoreboardCommandMixin {
 
@@ -66,7 +68,40 @@ public class ScoreboardCommandMixin {
     )
     private static LiteralArgumentBuilder<ServerCommandSource> multiScoreboard$addSetDisplaySingleScoreCommand(LiteralArgumentBuilder<ServerCommandSource> builder) {
         return builder.then(CommandManager.literal("indivSidebar")
+                .executes(context -> {
+                    var scoreboard = ((MultiScoreboardSidebarInterface)context.getSource().getServer().getScoreboard());
+                    var singleScoreSidebars = scoreboard.multiScoreboard$getSingleScoreSidebars();
+                    if(singleScoreSidebars.isEmpty()) {
+                        context.getSource().sendFeedback(() -> Text.translatable("multiscoreboard.commands.scoreboard.objectives.display.indivSidebar.removed.none"), false);
+                        return 0;
+                    }
+                    var count = 0;
+                    for(var singleScoreSidebar : new ArrayList<>(singleScoreSidebars.entrySet())) {
+                        for(var scoreHolder : singleScoreSidebar.getValue()) {
+                            scoreboard.multiScoreboard$toggleSingleScoreSidebar(singleScoreSidebar.getKey(), scoreHolder);
+                            count++;
+                        }
+                    }
+                    var finalCount = count;
+                    context.getSource().sendFeedback(() -> Text.translatable("multiscoreboard.commands.scoreboard.objectives.display.indivSidebar.removedAll", finalCount), false);
+                    return count;
+                })
                 .then(CommandManager.argument("objective", ScoreboardObjectiveArgumentType.scoreboardObjective())
+                        .executes(context -> {
+                            var objective = ScoreboardObjectiveArgumentType.getObjective(context, "objective");
+                            var scoreboard = ((MultiScoreboardSidebarInterface)context.getSource().getServer().getScoreboard());
+                            var scoreHolders = scoreboard.multiScoreboard$getSingleScoreSidebars().get(objective);
+                            if(scoreHolders == null) {
+                                context.getSource().sendFeedback(() -> Text.translatable("multiscoreboard.commands.scoreboard.objectives.display.indivSidebar.removed.none", objective.getDisplayName()), false);
+                                return 0;
+                            }
+                            var count = scoreHolders.size();
+                            for(var scoreHolder : new ArrayList<>(scoreHolders)) {
+                                scoreboard.multiScoreboard$toggleSingleScoreSidebar(objective, scoreHolder);
+                            }
+                            context.getSource().sendFeedback(() -> Text.translatable("multiscoreboard.commands.scoreboard.objectives.display.indivSidebar.removed.count", count, objective.getDisplayName()), false);
+                            return count;
+                        })
                         .then(CommandManager.argument("target", ScoreHolderArgumentType.scoreHolder())
                                 .executes(context -> {
                                     var objective = ScoreboardObjectiveArgumentType.getObjective(context, "objective");
