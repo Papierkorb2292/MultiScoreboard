@@ -361,7 +361,7 @@ public class ServerNbtSidebarManager extends PersistentState {
         public NbtCompound getNbt(RegistryWrapper.WrapperLookup registryLookup) {
             var world = manager.server.getWorld(worldKey);
             if(world == null) return null;
-            var blockEntity = world.getBlockEntity(pos);
+            var blockEntity = world.getWorldChunk(pos).getBlockEntity(pos);
             return blockEntity == null ? null : blockEntity.createNbt(registryLookup);
         }
 
