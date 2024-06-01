@@ -9,6 +9,7 @@ import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
+import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import net.papierkorb2292.multiscoreboard.client.MultiScoreboardClient;
 import net.papierkorb2292.multiscoreboard.client.SidebarObjectiveRenderable;
@@ -31,7 +32,7 @@ public abstract class InGameHudMixin {
     @Shadow @Final private MinecraftClient client;
 
     @WrapOperation(
-            method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/DrawContext;F)V",
+            method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/client/render/RenderTickCounter;)V",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/gui/hud/InGameHud;renderScoreboardSidebar(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/scoreboard/ScoreboardObjective;)V"
@@ -56,10 +57,10 @@ public abstract class InGameHudMixin {
     }
 
     @Inject(
-            method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/DrawContext;F)V",
+            method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/client/render/RenderTickCounter;)V",
             at = @At("TAIL")
     )
-    private void multiScoreboard$renderSidebarObjectives(DrawContext context, float tickDelta, CallbackInfo ci, @Local(ordinal = 1) ScoreboardObjective teamObjective, @Share("sidebarHeights") LocalRef<Map<SidebarRenderable, Integer>> sidebarHeightsRef) {
+    private void multiScoreboard$renderSidebarObjectives(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci, @Local(ordinal = 1) ScoreboardObjective teamObjective, @Share("sidebarHeights") LocalRef<Map<SidebarRenderable, Integer>> sidebarHeightsRef) {
         if(!MultiScoreboardClient.useMultiScoreboard()) return;
         var noTeamScoreboard = sidebarHeightsRef.get() == null;
         var totalHeight = 0;

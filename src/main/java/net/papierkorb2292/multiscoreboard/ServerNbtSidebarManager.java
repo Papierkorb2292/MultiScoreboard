@@ -388,7 +388,7 @@ public class ServerNbtSidebarManager extends PersistentState {
 
         public static BlockSidebarNbtProvider fromNbt(NbtCompound nbt, ServerNbtSidebarManager manager) {
             var pos = BlockPos.CODEC.parse(NbtOps.INSTANCE, nbt.get("pos")).getOrThrow();
-            var worldKey = RegistryKey.of(RegistryKeys.WORLD, new Identifier(nbt.getString("world")));
+            var worldKey = RegistryKey.of(RegistryKeys.WORLD, Identifier.of(nbt.getString("world")));
             return new BlockSidebarNbtProvider(pos, worldKey, manager);
         }
     }
@@ -428,7 +428,7 @@ public class ServerNbtSidebarManager extends PersistentState {
         }
 
         public static StorageSidebarNbtProvider fromNbt(NbtCompound nbt, ServerNbtSidebarManager manager) {
-            return new StorageSidebarNbtProvider(new Identifier(nbt.getString("id")), manager);
+            return new StorageSidebarNbtProvider(Identifier.of(nbt.getString("id")), manager);
         }
     }
 }

@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public record SetNbtSidebarS2CPacket(String nbtSidebarName, List<NbtElement> nbt) implements CustomPayload {
-    public static final Id<SetNbtSidebarS2CPacket> ID = new CustomPayload.Id<>(new Identifier(MultiScoreboard.MOD_ID, "set_nbt_sidebar"));
+    public static final Id<SetNbtSidebarS2CPacket> ID = new CustomPayload.Id<>(Identifier.of(MultiScoreboard.MOD_ID, "set_nbt_sidebar"));
     public static final Type<? super RegistryByteBuf, SetNbtSidebarS2CPacket> TYPE = PayloadTypeRegistry.playS2C().register(ID, PacketCodec.tuple(
             PacketCodecs.STRING,
             SetNbtSidebarS2CPacket::nbtSidebarName,
