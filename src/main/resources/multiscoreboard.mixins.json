@@ -8,6 +8,7 @@
     "DataCommandMixin",
     "EntityDataObjectAccessor",
     "MinecraftServerMixin",
+    "PauseContextMixin",
     "PlayerManagerMixin",
     "ScoreboardCommandMixin",
     "ScoreboardMixin",

@@ -49,21 +49,12 @@ public class ServerNbtSidebarManager extends PersistentState {
 
     public ServerNbtSidebarManager(MinecraftServer server) {
         this.server = server;
+    }
 
-        // Nbt sidebars are updated on a separate thread, so they keep working when the CommandCrafter debugger suspends the server
-        new Thread(() -> {
-            while(server.isRunning()) {
-                try {
-                    //noinspection BusyWait
-                    Thread.sleep(100);
-                    for(var entry : entries.entrySet()) {
-                        entry.getValue().updateNbt(entry.getKey());
-                    }
-                } catch (InterruptedException e) {
-                    break;
-                }
-            }
-        }).start();
+    public void tick() {
+        for(var entry : entries.entrySet()) {
+            entry.getValue().updateNbt(entry.getKey());
+        }
     }
 
     /**

@@ -7,7 +7,11 @@ import net.papierkorb2292.multiscoreboard.ServerNbtSidebarManagerContainer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.function.BooleanSupplier;
 
 @Mixin(MinecraftServer.class)
 public class MinecraftServerMixin implements ServerNbtSidebarManagerContainer  {
@@ -32,7 +36,7 @@ public class MinecraftServerMixin implements ServerNbtSidebarManagerContainer  {
         return persistentStateManager;
     }
 
-    /*@Inject(
+    @Inject(
             method = "tick",
             at = @At(
                     value = "INVOKE",
@@ -42,5 +46,5 @@ public class MinecraftServerMixin implements ServerNbtSidebarManagerContainer  {
     private void multiScoreboard$tickNbtSidebarManager(BooleanSupplier shouldKeepTicking, CallbackInfo ci) {
         if(multiScoreboard$nbtSidebarManager != null)
             multiScoreboard$nbtSidebarManager.tick();
-    }*/
+    }
 }
