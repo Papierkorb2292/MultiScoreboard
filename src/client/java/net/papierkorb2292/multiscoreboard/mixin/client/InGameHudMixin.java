@@ -45,13 +45,17 @@ public abstract class InGameHudMixin {
         }
         var scoreboard = Objects.requireNonNull(client.world).getScoreboard();
 
-        var teamScoreboardHeight = new SidebarObjectiveRenderable(teamObjective).calculateHeight();
+        var teamScoreboardHeight = new SidebarObjectiveRenderable(
+                teamObjective,
+                false
+        ).calculateHeight() + MultiScoreboardClient.sidebarGap;
         var calculatedHeights = MultiScoreboardClient.calculateSidebarHeights(scoreboard, null);
         var totalRestHeight = calculatedHeights.getFirst();
         scoreboardHeightsRef.set(calculatedHeights.getSecond());
 
         context.getMatrices().push();
-        context.getMatrices().translate(0, -totalRestHeight / 2f, 0);
+        //noinspection IntegerDivisionInFloatingPointContext
+        context.getMatrices().translate(0, MinecraftClient.getInstance().textRenderer.fontHeight-(teamScoreboardHeight + totalRestHeight)/2 + MultiScoreboardClient.getSidebarScrollTranslation(), 0);
         op.call(inGameHud, context, teamObjective);
         context.getMatrices().translate(0, teamScoreboardHeight, 0);
     }
@@ -69,24 +73,28 @@ public abstract class InGameHudMixin {
             var calculatedHeights = MultiScoreboardClient.calculateSidebarHeights(scoreboard, null);
             totalHeight = calculatedHeights.getFirst();
             sidebarHeightsRef.set(calculatedHeights.getSecond());
-            context.getMatrices().push();
         }
-        if(sidebarHeightsRef.get().isEmpty()) return;
+        if(sidebarHeightsRef.get().isEmpty()) {
+            if(!noTeamScoreboard)
+                context.getMatrices().pop();
+            return;
+        }
 
         var sorted = sidebarHeightsRef.get().entrySet().stream()
                 .sorted(Comparator.comparing(renderable -> renderable.getKey().getSortName()))
                 .iterator();
 
         if(noTeamScoreboard) {
+            context.getMatrices().push();
             //noinspection IntegerDivisionInFloatingPointContext
             context.getMatrices().translate(0, MinecraftClient.getInstance().textRenderer.fontHeight-totalHeight/2, 0);
+            context.getMatrices().translate(0, MultiScoreboardClient.getSidebarScrollTranslation(), 0);
         }
-        context.getMatrices().translate(0, MultiScoreboardClient.getSidebarScrollTranslation(), 0);
         while(sorted.hasNext()) {
             var renderable = sorted.next();
             renderable.getKey().render(context, (InGameHud)(Object)this);
             context.getMatrices().translate(0, renderable.getValue() + MultiScoreboardClient.sidebarGap, 0);
-        };
+        }
 
         context.getMatrices().pop();
     }

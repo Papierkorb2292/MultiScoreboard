@@ -191,7 +191,7 @@ public class MultiScoreboardClient implements ClientModInitializer {
         }).sum() + (scoreboardHeights.size() - 1) * sidebarGap;
 
         if(teamObjective != null) {
-            var teamObjectiveRenderable = new SidebarObjectiveRenderable(teamObjective);
+            var teamObjectiveRenderable = new SidebarObjectiveRenderable(teamObjective, false);
             var teamObjectiveHeight = teamObjectiveRenderable.calculateHeight();
             scoreboardHeights.put(teamObjectiveRenderable, teamObjectiveHeight);
             totalHeight += teamObjectiveHeight + sidebarGap;

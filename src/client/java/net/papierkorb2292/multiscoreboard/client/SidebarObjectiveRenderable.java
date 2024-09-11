@@ -12,10 +12,16 @@ public class SidebarObjectiveRenderable implements SidebarRenderable {
 
     private final ScoreboardObjective objective;
     private final SidebarSingleScoresRenderable singleScoresRenderable;
+    private final boolean showSingleScores;
 
-    public SidebarObjectiveRenderable(ScoreboardObjective objective) {
+    public SidebarObjectiveRenderable(ScoreboardObjective objective, boolean showSingleScores) {
         this.objective = objective;
         this.singleScoresRenderable = new SidebarSingleScoresRenderable(objective);
+        this.showSingleScores = showSingleScores;
+    }
+
+    public SidebarObjectiveRenderable(ScoreboardObjective objective) {
+        this(objective, true);
     }
 
     @Override
@@ -28,10 +34,12 @@ public class SidebarObjectiveRenderable implements SidebarRenderable {
         var singleScoresEntries = singleScoresRenderable.buildEntries();
         CURRENT_MAX_WIDTH.set(singleScoresRenderable.getMaxEntryWidth(singleScoresEntries));
         ((InGameHudAccessor)inGameHud).callRenderScoreboardSidebar(context, objective);
-        context.getMatrices().push();
-        context.getMatrices().translate(0, calculateVanillaEntriesHeight(), 0);
-        singleScoresRenderable.renderEntries(context, singleScoresEntries, CURRENT_MAX_WIDTH.get());
-        context.getMatrices().pop();
+        if(showSingleScores) {
+            context.getMatrices().push();
+            context.getMatrices().translate(0, calculateVanillaEntriesHeight(), 0);
+            singleScoresRenderable.renderEntries(context, singleScoresEntries, CURRENT_MAX_WIDTH.get());
+            context.getMatrices().pop();
+        }
         CURRENT_MAX_WIDTH.remove();
     }
 
@@ -41,6 +49,9 @@ public class SidebarObjectiveRenderable implements SidebarRenderable {
 
     @Override
     public int calculateHeight() {
-        return MinecraftClient.getInstance().textRenderer.fontHeight + calculateVanillaEntriesHeight() + singleScoresRenderable.getEntriesHeight();
+        final var vanillaHeight = MinecraftClient.getInstance().textRenderer.fontHeight + calculateVanillaEntriesHeight();
+        if(!showSingleScores)
+            return vanillaHeight;
+        return vanillaHeight + singleScoresRenderable.getEntriesHeight();
     }
 }
