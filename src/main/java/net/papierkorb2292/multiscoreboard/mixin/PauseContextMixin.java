@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.function.Supplier;
 
 @Pseudo
-@Mixin(targets = "net.papierkorb2292.command_crafter.editor.debugger.server.PauseContext")
+@Mixin(targets = "net.papierkorb2292.command_crafter.editor.debugger.server.PauseContext", remap = false)
 public class PauseContextMixin {
 
     @Shadow
