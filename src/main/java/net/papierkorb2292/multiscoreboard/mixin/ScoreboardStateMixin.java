@@ -4,7 +4,6 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtString;
-import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.ScoreboardDisplaySlot;
 import net.minecraft.scoreboard.ScoreboardState;
@@ -26,7 +25,7 @@ public class ScoreboardStateMixin {
             method = "readNbt",
             at = @At("TAIL")
     )
-    private void multiScoreboard$readSidebarObjectivesNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries, CallbackInfoReturnable<ScoreboardState> cir) {
+    private void multiScoreboard$readSidebarObjectivesNbt(NbtCompound nbt, CallbackInfoReturnable<ScoreboardState> cir) {
         var sidebarSlotObjectives = nbt.getList("SidebarSlotObjectives", NbtElement.STRING_TYPE);
         if(sidebarSlotObjectives != null) {
             for (NbtElement element : sidebarSlotObjectives) {

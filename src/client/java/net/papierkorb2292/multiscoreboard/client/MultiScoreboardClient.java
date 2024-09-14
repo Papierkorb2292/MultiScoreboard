@@ -34,18 +34,18 @@ public class MultiScoreboardClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        ClientPlayNetworking.registerGlobalReceiver(SetUseMultiScoreboardS2CPacket.ID, (packet, context) -> {
+        ClientPlayNetworking.registerGlobalReceiver(SetUseMultiScoreboardS2CPacket.PACKET_TYPE, (packet, player, sender) -> {
             useMultiScoreboard = packet.useMultiScoreboard();
         });
-        ClientPlayNetworking.registerGlobalReceiver(SetNbtSidebarS2CPacket.ID, (packet, context) -> {
+        ClientPlayNetworking.registerGlobalReceiver(SetNbtSidebarS2CPacket.PACKET_TYPE, (packet, player, sender) -> {
             nbtSidebars.put(packet.nbtSidebarName(), packet.nbt());
         });
-        ClientPlayNetworking.registerGlobalReceiver(RemoveNbtSidebarS2CPacket.ID, (packet, context) -> {
+        ClientPlayNetworking.registerGlobalReceiver(RemoveNbtSidebarS2CPacket.PACKET_TYPE, (packet, player, sender) -> {
             nbtSidebars.remove(packet.nbtSidebarName());
             clampScrollTranslation();
         });
-        ClientPlayNetworking.registerGlobalReceiver(ToggleSingleScoreSidebarS2CPacket.ID, (packet, context) -> {
-            var scoreboard = context.player().getScoreboard();
+        ClientPlayNetworking.registerGlobalReceiver(ToggleSingleScoreSidebarS2CPacket.PACKET_TYPE, (packet, player, sender) -> {
+            var scoreboard = player.getScoreboard();
             var objective = scoreboard.getNullableObjective(packet.objective());
             if(objective == null) return;
             ((MultiScoreboardSidebarInterface)scoreboard).multiScoreboard$toggleSingleScoreSidebar(objective, packet.score());

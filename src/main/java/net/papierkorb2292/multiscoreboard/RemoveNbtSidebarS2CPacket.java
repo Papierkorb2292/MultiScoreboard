@@ -1,17 +1,24 @@
 package net.papierkorb2292.multiscoreboard;
 
-import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
+import net.fabricmc.fabric.api.networking.v1.FabricPacket;
+import net.fabricmc.fabric.api.networking.v1.PacketType;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.Identifier;
 
-public record RemoveNbtSidebarS2CPacket(String nbtSidebarName) implements CustomPayload {
-    public static final Id<RemoveNbtSidebarS2CPacket> ID = new CustomPayload.Id<>(Identifier.of(MultiScoreboard.MOD_ID, "remove_nbt_sidebar"));
-    public static final Type<? super RegistryByteBuf, RemoveNbtSidebarS2CPacket> TYPE = PayloadTypeRegistry.playS2C().register(ID, PacketCodecs.STRING.xmap(RemoveNbtSidebarS2CPacket::new, RemoveNbtSidebarS2CPacket::nbtSidebarName));
+public record RemoveNbtSidebarS2CPacket(String nbtSidebarName) implements FabricPacket {
+    public static PacketType<RemoveNbtSidebarS2CPacket> PACKET_TYPE = PacketType.create(new Identifier(MultiScoreboard.MOD_ID, "remove_nbt_sidebar"), RemoveNbtSidebarS2CPacket::read);
 
     @Override
-    public Id<RemoveNbtSidebarS2CPacket> getId() {
-        return ID;
+    public void write(PacketByteBuf buf) {
+        buf.writeString(nbtSidebarName);
+    }
+
+    @Override
+    public PacketType<?> getType() {
+        return PACKET_TYPE;
+    }
+
+    public static RemoveNbtSidebarS2CPacket read(PacketByteBuf buf) {
+        return new RemoveNbtSidebarS2CPacket(buf.readString());
     }
 }

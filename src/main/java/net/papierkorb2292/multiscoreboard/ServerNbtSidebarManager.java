@@ -13,7 +13,6 @@ import net.minecraft.nbt.NbtEnd;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -170,7 +169,7 @@ public class ServerNbtSidebarManager extends PersistentState {
     }
 
     @Override
-    public NbtCompound writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
+    public NbtCompound writeNbt(NbtCompound nbt) {
         var entriesNbt = new NbtCompound();
         for(var entry : entries.entrySet()) {
             var name = entry.getKey();
@@ -239,7 +238,7 @@ public class ServerNbtSidebarManager extends PersistentState {
     public static PersistentState.Type<ServerNbtSidebarManager> getPersistentStateType(MinecraftServer server) {
         return new PersistentState.Type<>(
                 () -> new ServerNbtSidebarManager(server),
-                (nbt, decoderRegistryLookup) -> new ServerNbtSidebarManager(server).readNbt(nbt),
+                nbt -> new ServerNbtSidebarManager(server).readNbt(nbt),
                 null
         );
     }
@@ -269,7 +268,7 @@ public class ServerNbtSidebarManager extends PersistentState {
         private void updateNbt(String name) {
             List<NbtElement> newNBT;
             try {
-                var fullNbt = nbtProvider.getNbt(server.getRegistryManager());
+                var fullNbt = nbtProvider.getNbt();
                 newNBT = fullNbt == null ? Collections.emptyList() : path.get(fullNbt);
             } catch(CommandSyntaxException e) {
                 newNBT = Collections.emptyList();
@@ -291,7 +290,7 @@ public class ServerNbtSidebarManager extends PersistentState {
 
     public interface SidebarNBTProvider {
         @Nullable
-        NbtCompound getNbt(RegistryWrapper.WrapperLookup registryLookup);
+        NbtCompound getNbt();
         void writeProviderDataToNbt(NbtCompound nbt);
         boolean isDataObject(DataCommandObject dataObject);
         String getDefaultNamePrefix();
@@ -307,7 +306,7 @@ public class ServerNbtSidebarManager extends PersistentState {
         }
 
         @Override
-        public NbtCompound getNbt(RegistryWrapper.WrapperLookup registryLookup) {
+        public NbtCompound getNbt() {
             for (var world : manager.server.getWorlds()) {
                 var entity = world.getEntity(uuid);
                 if (entity != null) {
@@ -349,16 +348,16 @@ public class ServerNbtSidebarManager extends PersistentState {
         }
 
         @Override
-        public NbtCompound getNbt(RegistryWrapper.WrapperLookup registryLookup) {
+        public NbtCompound getNbt() {
             var world = manager.server.getWorld(worldKey);
             if(world == null) return null;
             var blockEntity = world.getWorldChunk(pos).getBlockEntity(pos);
-            return blockEntity == null ? null : blockEntity.createNbt(registryLookup);
+            return blockEntity == null ? null : blockEntity.createNbt();
         }
 
         @Override
         public void writeProviderDataToNbt(NbtCompound nbt) {
-            nbt.put("pos", BlockPos.CODEC.encode(pos, NbtOps.INSTANCE, NbtEnd.INSTANCE).getOrThrow());
+            nbt.put("pos", BlockPos.CODEC.encode(pos, NbtOps.INSTANCE, NbtEnd.INSTANCE).getOrThrow(false, e -> {}));
             nbt.putString("world", worldKey.getValue().toString());
         }
 
@@ -378,8 +377,8 @@ public class ServerNbtSidebarManager extends PersistentState {
         }
 
         public static BlockSidebarNbtProvider fromNbt(NbtCompound nbt, ServerNbtSidebarManager manager) {
-            var pos = BlockPos.CODEC.parse(NbtOps.INSTANCE, nbt.get("pos")).getOrThrow();
-            var worldKey = RegistryKey.of(RegistryKeys.WORLD, Identifier.of(nbt.getString("world")));
+            var pos = BlockPos.CODEC.parse(NbtOps.INSTANCE, nbt.get("pos")).getOrThrow(false, e -> {});
+            var worldKey = RegistryKey.of(RegistryKeys.WORLD, new Identifier(nbt.getString("world")));
             return new BlockSidebarNbtProvider(pos, worldKey, manager);
         }
     }
@@ -394,7 +393,7 @@ public class ServerNbtSidebarManager extends PersistentState {
         }
 
         @Override
-        public NbtCompound getNbt(RegistryWrapper.WrapperLookup registryLookup) {
+        public NbtCompound getNbt() {
             try {
                 return manager.server.getDataCommandStorage().get(id);
             } catch(NullPointerException e) {
@@ -419,7 +418,7 @@ public class ServerNbtSidebarManager extends PersistentState {
         }
 
         public static StorageSidebarNbtProvider fromNbt(NbtCompound nbt, ServerNbtSidebarManager manager) {
-            return new StorageSidebarNbtProvider(Identifier.of(nbt.getString("id")), manager);
+            return new StorageSidebarNbtProvider(new Identifier(nbt.getString("id")), manager);
         }
     }
 }
