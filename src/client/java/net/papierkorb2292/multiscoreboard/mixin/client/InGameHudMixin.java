@@ -11,6 +11,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.scoreboard.ScoreboardObjective;
+import net.papierkorb2292.multiscoreboard.MultiScoreboardSidebarInterface;
 import net.papierkorb2292.multiscoreboard.client.MultiScoreboardClient;
 import net.papierkorb2292.multiscoreboard.client.SidebarObjectiveRenderable;
 import net.papierkorb2292.multiscoreboard.client.SidebarRenderable;
@@ -97,6 +98,21 @@ public abstract class InGameHudMixin {
         }
 
         context.getMatrices().pop();
+    }
+
+    @ModifyExpressionValue(
+            method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/client/render/RenderTickCounter;)V",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/scoreboard/Scoreboard;getObjectiveForSlot(Lnet/minecraft/scoreboard/ScoreboardDisplaySlot;)Lnet/minecraft/scoreboard/ScoreboardObjective;",
+                    ordinal = 1
+            )
+    )
+    private ScoreboardObjective multiScoreboard$referGetSidebarObjectiveToMultiScoreboard(ScoreboardObjective original) {
+        return original != null || MultiScoreboardClient.useMultiScoreboard()
+                ? original
+                : ((MultiScoreboardSidebarInterface)Objects.requireNonNull(client.world).getScoreboard())
+                    .multiScoreboard$getSidebarObjectives().stream().findAny().orElse(null);
     }
 
     @ModifyExpressionValue(
