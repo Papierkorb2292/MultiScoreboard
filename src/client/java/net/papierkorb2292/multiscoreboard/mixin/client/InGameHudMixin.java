@@ -123,7 +123,7 @@ public abstract class InGameHudMixin {
                     ordinal = 0
             )
     )
-    private int command_crafter$removeSidebarHeightOffset(int fontHeight) {
+    private int multiScoreboard$removeSidebarHeightOffset(int fontHeight) {
         return MultiScoreboardClient.useMultiScoreboard() ? fontHeight * 3 : fontHeight;
     }
 
@@ -132,7 +132,7 @@ public abstract class InGameHudMixin {
             at = @At("LOAD:LAST"),
             ordinal = 1
     )
-    private int command_crafter$applyAdditionalScoreboardMaxWidth(int maxWidth) {
+    private int multiScoreboard$applyAdditionalScoreboardMaxWidth(int maxWidth) {
         if(SidebarObjectiveRenderable.CURRENT_MAX_WIDTH.get() != null) {
             maxWidth = Math.max(SidebarObjectiveRenderable.CURRENT_MAX_WIDTH.get(), maxWidth);
             SidebarObjectiveRenderable.CURRENT_MAX_WIDTH.set(maxWidth);
