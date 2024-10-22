@@ -24,15 +24,15 @@ public abstract class ServerScoreboardMixin extends ScoreboardMixin {
 
     @Shadow @Final private MinecraftServer server;
 
-    @Shadow @Final private Set<ScoreboardObjective> objectives;
+    @Shadow @Final private Set<ScoreboardObjective> syncableObjectives;
 
     @Shadow protected abstract void runUpdateListeners();
 
-    @Shadow public abstract void addScoreboardObjective(ScoreboardObjective objective);
+    @Shadow public abstract void startSyncing(ScoreboardObjective objective);
 
-    @Shadow public abstract int getSlot(ScoreboardObjective objective);
+    @Shadow public abstract int countDisplaySlots(ScoreboardObjective objective);
 
-    @Shadow public abstract void removeScoreboardObjective(ScoreboardObjective objective);
+    @Shadow public abstract void stopSyncing(ScoreboardObjective objective);
 
     @ModifyReturnValue(
             method = "createChangePackets",
@@ -59,7 +59,7 @@ public abstract class ServerScoreboardMixin extends ScoreboardMixin {
     }
 
     @ModifyReturnValue(
-            method = "getSlot",
+            method = "countDisplaySlots",
             at = @At("RETURN")
     )
     private int multiScoreboard$adjustSlotCountForSidebar(int slot, ScoreboardObjective objective) {
@@ -79,9 +79,9 @@ public abstract class ServerScoreboardMixin extends ScoreboardMixin {
     public boolean multiScoreboard$toggleSingleScoreSidebar(ScoreboardObjective objective, String scoreHolder) {
         var added = super.multiScoreboard$toggleSingleScoreSidebar(objective, scoreHolder);
         if(added) {
-            if(!objectives.contains(objective)) addScoreboardObjective(objective);
+            if(!syncableObjectives.contains(objective)) startSyncing(objective);
         } else {
-            if (getSlot(objective) == 0) removeScoreboardObjective(objective);
+            if (countDisplaySlots(objective) == 0) stopSyncing(objective);
         }
         runUpdateListeners();
         for(var player : server.getPlayerManager().getPlayerList()) {

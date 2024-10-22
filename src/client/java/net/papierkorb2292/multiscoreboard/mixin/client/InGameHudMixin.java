@@ -116,7 +116,7 @@ public abstract class InGameHudMixin {
     }
 
     @ModifyExpressionValue(
-            method = "method_55440",
+            method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/scoreboard/ScoreboardObjective;)V",
             at = @At(
                     value = "CONSTANT",
                     args = "intValue=9",
