@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 public class SidebarNbtRenderable implements SidebarRenderable {
 
@@ -119,7 +120,11 @@ public class SidebarNbtRenderable implements SidebarRenderable {
         return Text.literal(String.valueOf(index)).styled(style -> style.withFormatting(TAG_FORMATTING));
     }
 
+    private static Pattern TAG_QUOTATION_UNNECESSARY_PATTERN = Pattern.compile("[A-Za-z._]+[A-Za-z0-9._+-]*");
+
     private static MutableText getTagText(String tag) {
+        if(!TAG_QUOTATION_UNNECESSARY_PATTERN.matcher(tag).matches())
+            tag = NbtString.escape(tag);
         return Text.literal(tag).styled(style -> style.withFormatting(TAG_FORMATTING));
     }
 
