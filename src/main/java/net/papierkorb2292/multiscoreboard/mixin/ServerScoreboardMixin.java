@@ -1,13 +1,21 @@
 package net.papierkorb2292.multiscoreboard.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.ScoreboardDisplayS2CPacket;
 import net.minecraft.scoreboard.ScoreboardDisplaySlot;
 import net.minecraft.scoreboard.ScoreboardObjective;
+import net.minecraft.scoreboard.ScoreboardState;
 import net.minecraft.scoreboard.ServerScoreboard;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.PersistentState;
+import net.papierkorb2292.multiscoreboard.MultiScoreboardSidebarInterface;
 import net.papierkorb2292.multiscoreboard.ToggleSingleScoreSidebarS2CPacket;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,8 +24,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Mixin(ServerScoreboard.class)
 public abstract class ServerScoreboardMixin extends ScoreboardMixin {
@@ -88,5 +95,58 @@ public abstract class ServerScoreboardMixin extends ScoreboardMixin {
             ServerPlayNetworking.send(player, new ToggleSingleScoreSidebarS2CPacket(objective.getName(), scoreHolder));
         }
         return added;
+    }
+
+    @ModifyReturnValue(
+            method = "method_67325",
+            at = @At("RETURN")
+    )
+    private static Codec<ScoreboardState> multiScoreboard$addSidebarsToCodec(Codec<ScoreboardState> original, PersistentState.Context context) {
+        var scoreboard = context.getWorldOrThrow().getScoreboard();
+        Codec<ScoreboardObjective> objectiveNameCodec = Codec.STRING.xmap(
+                scoreboard::getNullableObjective,
+                ScoreboardObjective::getName
+        );
+        Codec<Void> objectiveSidebarCodec = objectiveNameCodec.listOf().xmap(
+                objectives -> {
+                    for (var objective : objectives)
+                        if (objective != null)
+                            scoreboard.setObjectiveSlot(ScoreboardDisplaySlot.SIDEBAR, objective);
+                    return null;
+                },
+                _void -> new ArrayList<>(((MultiScoreboardSidebarInterface) scoreboard).multiScoreboard$getSidebarObjectives())
+        );
+        Codec<Void> singleScoreSidebarCodec = Codec.unboundedMap(
+                objectiveNameCodec,
+                Codec.STRING.listOf().<Set<String>>xmap(
+                        HashSet::new,
+                        ArrayList::new
+                )
+        ).xmap(map -> {
+            for(var entry : map.entrySet()) {
+                var objective = entry.getKey();
+                if(objective == null) continue;
+                for(String name : entry.getValue())
+                    ((MultiScoreboardSidebarInterface)scoreboard).multiScoreboard$toggleSingleScoreSidebar(objective, name);
+            }
+            return null;
+        }, _void -> ((MultiScoreboardSidebarInterface)scoreboard).multiScoreboard$getSingleScoreSidebars());
+        Codec<Void> customDataCodec = RecordCodecBuilder.create(instance -> instance.group(
+                objectiveSidebarCodec.fieldOf("SidebarSlotObjectives").forGetter(state -> null),
+                singleScoreSidebarCodec.fieldOf("SingleScoreSidebars").forGetter(state -> null)
+        ).apply(instance, (_void1, _void2) -> null));
+        return new Codec<>() {
+            @Override
+            public <T> DataResult<Pair<ScoreboardState, T>> decode(DynamicOps<T> ops, T input) {
+                return original.decode(ops, input).flatMap(result ->
+                        customDataCodec.decode(ops, input).map(_void -> result));
+            }
+
+            @Override
+            public <T> DataResult<T> encode(ScoreboardState input, DynamicOps<T> ops, T prefix) {
+                return original.encode(input, ops, prefix).flatMap(result ->
+                        customDataCodec.encode(null, ops, result));
+            }
+        };
     }
 }

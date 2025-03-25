@@ -1,8 +1,13 @@
 package net.papierkorb2292.multiscoreboard;
 
+import com.google.common.collect.ImmutableMap;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.command.DataCommandObject;
@@ -19,8 +24,11 @@ import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Uuids;
+import net.minecraft.util.dynamic.Codecs;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.PersistentState;
+import net.minecraft.world.PersistentStateType;
 import net.papierkorb2292.multiscoreboard.mixin.BlockDataObjectAccessor;
 import net.papierkorb2292.multiscoreboard.mixin.EntityDataObjectAccessor;
 import net.papierkorb2292.multiscoreboard.mixin.StorageDataObjectAccessor;
@@ -36,6 +44,8 @@ public class ServerNbtSidebarManager extends PersistentState {
 
     public static final NbtPathArgumentType.NbtPath ROOT_PATH;
 
+    private static final Codec<Map<String, Entry>> CODEC = Codec.unboundedMap(Codec.STRING, Entry.CODEC);
+
     static {
         try {
             ROOT_PATH = new NbtPathArgumentType().parse(new StringReader(""));
@@ -47,15 +57,20 @@ public class ServerNbtSidebarManager extends PersistentState {
     private static final DynamicCommandExceptionType INVALID_DATA_SOURCE_EXCEPTION = new DynamicCommandExceptionType(arg -> Text.of("Unknown data source: " + arg));
 
     private final MinecraftServer server;
-    private final Map<String, Entry> entries = new HashMap<>();
+    private final Map<String, Entry> entries;
 
     public ServerNbtSidebarManager(MinecraftServer server) {
+        this(server, new HashMap<>());
+    }
+
+    public ServerNbtSidebarManager(MinecraftServer server, Map<String, Entry> entries) {
         this.server = server;
+        this.entries = new HashMap<>(entries);
     }
 
     public void tick() {
         for(var entry : entries.entrySet()) {
-            entry.getValue().updateNbt(entry.getKey());
+            entry.getValue().updateNbt(entry.getKey(), this);
         }
     }
 
@@ -71,14 +86,14 @@ public class ServerNbtSidebarManager extends PersistentState {
         SidebarNBTProvider sidebarNBTProvider;
         if(dataObject instanceof EntityDataObjectAccessor entityDataObjectAccessor) {
             var uuid = entityDataObjectAccessor.getEntity().getUuid();
-            sidebarNBTProvider = new EntitySidebarNbtProvider(uuid, this);
+            sidebarNBTProvider = new EntitySidebarNbtProvider(uuid);
         } else if(dataObject instanceof BlockDataObjectAccessor blockDataObjectAccessor) {
             var pos = blockDataObjectAccessor.getPos();
             var worldKey = Objects.requireNonNull(blockDataObjectAccessor.getBlockEntity().getWorld()).getRegistryKey();
-            sidebarNBTProvider = new BlockSidebarNbtProvider(pos, worldKey, this);
+            sidebarNBTProvider = new BlockSidebarNbtProvider(pos, worldKey);
         } else if(dataObject instanceof StorageDataObjectAccessor storageDataObjectAccessor) {
             var id = storageDataObjectAccessor.getId();
-            sidebarNBTProvider = new StorageSidebarNbtProvider(id, this);
+            sidebarNBTProvider = new StorageSidebarNbtProvider(id);
         } else {
             throw INVALID_DATA_SOURCE_EXCEPTION.create(dataObject.getClass().getName());
         }
@@ -93,7 +108,7 @@ public class ServerNbtSidebarManager extends PersistentState {
         markDirty();
         var entry = new Entry(sidebarNBTProvider, path);
         entries.put(name, entry);
-        entry.updateNbt(name);
+        entry.updateNbt(name, this);
     }
 
     public boolean removeEntry(String name) {
@@ -158,12 +173,6 @@ public class ServerNbtSidebarManager extends PersistentState {
         return entries.keySet();
     }
 
-    /*public void tick() {
-        for(var entry : entries.entrySet()) {
-            entry.getValue().updateNbt(entry.getKey());
-        }
-    }*/
-
     public void onPlayerJoin(PacketSender packetSender) {
         for(var entry : entries.entrySet()) {
             var packet = new SetNbtSidebarS2CPacket(entry.getKey(), entry.getValue().getLastSentNbt());
@@ -171,82 +180,30 @@ public class ServerNbtSidebarManager extends PersistentState {
         }
     }
 
-    @Override
-    public NbtCompound writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
-        var entriesNbt = new NbtCompound();
-        for(var entry : entries.entrySet()) {
-            var name = entry.getKey();
-            var dataSource = entry.getValue();
-            var dataSourceNbt = new NbtCompound();
-            var nbtProviderNbt = new NbtCompound();
-            dataSource.nbtProvider.writeProviderDataToNbt(nbtProviderNbt);
-            if(dataSource.nbtProvider instanceof EntitySidebarNbtProvider) {
-                nbtProviderNbt.putString("type", ENTITY_DATA_OBJECT_TYPE);
-            } else if(dataSource.nbtProvider instanceof BlockSidebarNbtProvider) {
-                nbtProviderNbt.putString("type", BLOCK_DATA_OBJECT_TYPE);
-            } else if(dataSource.nbtProvider instanceof StorageSidebarNbtProvider) {
-                nbtProviderNbt.putString("type", STORAGE_DATA_OBJECT_TYPE);
-            } else {
-                MultiScoreboard.LOGGER.error("Error saving NBT Sidebar '{}', unknown dataSource nbt provider: '{}'", name, dataSource.nbtProvider.getClass().getName());
-                continue;
-            }
-            dataSourceNbt.put("nbtProvider", nbtProviderNbt);
-            dataSourceNbt.putString("path", dataSource.path.toString());
-            entriesNbt.put(name, dataSourceNbt);
-        };
-        nbt.put("entries", entriesNbt);
-        return nbt;
-    }
-
-    public ServerNbtSidebarManager readNbt(NbtCompound nbt) {
-        var entriesNbt = nbt.getCompound("entries");
-        if(!(entriesNbt instanceof NbtCompound)) return this;
-        for(var name : entriesNbt.getKeys()) {
-            try {
-                var dataSourceNbt = entriesNbt.getCompound(name);
-                if(!dataSourceNbt.contains("path", NbtElement.STRING_TYPE) || !dataSourceNbt.contains("nbtProvider", NbtElement.COMPOUND_TYPE)) {
-                    MultiScoreboard.LOGGER.error("Error loading NBT Sidebar '{}', could not load data source, because it is missing tags", name);
-                    continue;
-                }
-                NbtPathArgumentType.NbtPath path;
-                path = NbtPathArgumentType.nbtPath().parse(new StringReader(dataSourceNbt.getString("path")));
-                var nbtProviderNbt = dataSourceNbt.getCompound("nbtProvider");
-                if(!nbtProviderNbt.contains("type", NbtElement.STRING_TYPE)) {
-                    MultiScoreboard.LOGGER.error("Error loading NBT Sidebar '{}', could not load data source, because 'dataObject' is missing the 'type' tag", name);
-                    continue;
-                }
-                SidebarNBTProvider sidebarNBTProvider;
-                switch(nbtProviderNbt.getString("type")) {
-                    case ENTITY_DATA_OBJECT_TYPE:
-                        sidebarNBTProvider = EntitySidebarNbtProvider.fromNbt(nbtProviderNbt, this);
-                        break;
-                    case BLOCK_DATA_OBJECT_TYPE:
-                        sidebarNBTProvider = BlockSidebarNbtProvider.fromNbt(nbtProviderNbt, this);
-                        break;
-                    case STORAGE_DATA_OBJECT_TYPE:
-                        sidebarNBTProvider = StorageSidebarNbtProvider.fromNbt(nbtProviderNbt, this);
-                        break;
-                    default:
-                        MultiScoreboard.LOGGER.error("Error loading NBT Sidebar '{}', unknown nbt provider type: '{}'", name, nbtProviderNbt.getString("type"));
-                        continue;
-                }
-                addEntry(name, sidebarNBTProvider, path);
-            } catch(Exception e) {
-                MultiScoreboard.LOGGER.error("Error loading NBT Sidebar '{}': ", name, e);
-            }
-        }
-        return this;
-    }
-
-    public static PersistentState.Type<ServerNbtSidebarManager> getPersistentStateType(MinecraftServer server) {
-        return new PersistentState.Type<>(
+    public static PersistentStateType<ServerNbtSidebarManager> getPersistentStateType(MinecraftServer server) {
+        return new PersistentStateType<>(
+                "multiscoreboard_nbt",
                 () -> new ServerNbtSidebarManager(server),
-                (nbt, decoderRegistryLookup) -> new ServerNbtSidebarManager(server).readNbt(nbt),
+                CODEC.xmap(entries -> new ServerNbtSidebarManager(server, entries), manager -> manager.entries),
                 null
         );
     }
 
-    public final class Entry {
+    public static final class Entry {
+        public static final Codec<Entry> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                SidebarNBTProvider.CODEC.fieldOf("nbtProvider").forGetter(Entry::getNbtProvider),
+                Codecs.exceptionCatching(Codec.STRING.flatXmap(
+                        string -> {
+                            try {
+                                return DataResult.success(NbtPathArgumentType.nbtPath().parse(new StringReader(string)));
+                            } catch(CommandSyntaxException e) {
+                                return DataResult.error(e::getMessage);
+                            }
+                        },
+                        path -> DataResult.success(path.toString())
+                )).fieldOf("path").forGetter(Entry::getPath)
+        ).apply(instance, Entry::new));
+
         private final SidebarNBTProvider nbtProvider;
         private final NbtPathArgumentType.NbtPath path;
         private List<NbtElement> lastSentNbt = null;
@@ -268,10 +225,10 @@ public class ServerNbtSidebarManager extends PersistentState {
             return lastSentNbt;
         }
 
-        private void updateNbt(String name) {
+        private void updateNbt(String name, ServerNbtSidebarManager manager) {
             List<NbtElement> newNBT;
             try {
-                var fullNbt = nbtProvider.getNbt(server.getRegistryManager());
+                var fullNbt = nbtProvider.getNbt(manager.server.getRegistryManager(), manager);
                 newNBT = fullNbt == null ? Collections.emptyList() : path.get(fullNbt);
             } catch(CommandSyntaxException e) {
                 newNBT = Collections.emptyList();
@@ -279,7 +236,7 @@ public class ServerNbtSidebarManager extends PersistentState {
             if(!newNBT.equals(lastSentNbt)) {
                 lastSentNbt = newNBT.stream().map(NbtElement::copy).toList();
                 var packet = new SetNbtSidebarS2CPacket(name, newNBT);
-                for(var player : server.getPlayerManager().getPlayerList()) {
+                for(var player : manager.server.getPlayerManager().getPlayerList()) {
                     ServerPlayNetworking.send(player, packet);
                 }
             }
@@ -292,30 +249,35 @@ public class ServerNbtSidebarManager extends PersistentState {
     }
 
     public interface SidebarNBTProvider {
+        Map<String, MapCodec<? extends SidebarNBTProvider>> IMPLEMENTATION_CODECS = ImmutableMap.<String, MapCodec<? extends SidebarNBTProvider>>builder()
+                .put(ENTITY_DATA_OBJECT_TYPE, EntitySidebarNbtProvider.CODEC)
+                .put(BLOCK_DATA_OBJECT_TYPE, BlockSidebarNbtProvider.CODEC)
+                .put(STORAGE_DATA_OBJECT_TYPE, StorageSidebarNbtProvider.CODEC)
+                .build();
+
+        MapCodec<SidebarNBTProvider> CODEC = Codec.STRING.dispatchMap("type", SidebarNBTProvider::getProviderTypeName, IMPLEMENTATION_CODECS::get);
+
         @Nullable
-        NbtCompound getNbt(RegistryWrapper.WrapperLookup registryLookup);
-        void writeProviderDataToNbt(NbtCompound nbt);
+        NbtCompound getNbt(RegistryWrapper.WrapperLookup registryLookup, ServerNbtSidebarManager manager);
         boolean isDataObject(DataCommandObject dataObject);
         String getDefaultNamePrefix();
+        String getProviderTypeName();
     }
 
-    public static class EntitySidebarNbtProvider implements SidebarNBTProvider {
-        private final UUID uuid;
-        private final ServerNbtSidebarManager manager;
-
-        public EntitySidebarNbtProvider(UUID uuid, ServerNbtSidebarManager manager) {
-            this.uuid = uuid;
-            this.manager = manager;
-        }
+    public record EntitySidebarNbtProvider(UUID uuid) implements SidebarNBTProvider {
+        public static final MapCodec<EntitySidebarNbtProvider> CODEC = Uuids.CODEC.xmap(
+                EntitySidebarNbtProvider::new,
+                EntitySidebarNbtProvider::uuid
+        ).fieldOf("uuid");
 
         @Override
-        public NbtCompound getNbt(RegistryWrapper.WrapperLookup registryLookup) {
+        public NbtCompound getNbt(RegistryWrapper.WrapperLookup registryLookup, ServerNbtSidebarManager manager) {
             for (var world : manager.server.getWorlds()) {
                 var entity = world.getEntity(uuid);
                 if (entity != null) {
                     final var nbt = entity.writeNbt(new NbtCompound());
-                    if (entity instanceof PlayerEntity) {
-                        ItemStack itemStack = ((PlayerEntity)entity).getInventory().getMainHandStack();
+                    if (entity instanceof PlayerEntity player) {
+                        ItemStack itemStack = player.getInventory().getSelectedStack();
                         if (!itemStack.isEmpty()) {
                             nbt.put("SelectedItem", itemStack.toNbt(entity.getRegistryManager()));
                         }
@@ -324,11 +286,6 @@ public class ServerNbtSidebarManager extends PersistentState {
                 }
             }
             return null;
-        }
-
-        @Override
-        public void writeProviderDataToNbt(NbtCompound nbt) {
-            nbt.putUuid("uuid", uuid);
         }
 
         @Override
@@ -341,34 +298,24 @@ public class ServerNbtSidebarManager extends PersistentState {
             return uuid.toString();
         }
 
-        public static EntitySidebarNbtProvider fromNbt(NbtCompound nbt, ServerNbtSidebarManager manager) {
-            return new EntitySidebarNbtProvider(nbt.getUuid("uuid"), manager);
+        @Override
+        public String getProviderTypeName() {
+            return ENTITY_DATA_OBJECT_TYPE;
         }
     }
 
-    public static class BlockSidebarNbtProvider implements SidebarNBTProvider {
-        private final BlockPos pos;
-        private final RegistryKey<net.minecraft.world.World> worldKey;
-        private final ServerNbtSidebarManager manager;
-
-        public BlockSidebarNbtProvider(BlockPos pos, RegistryKey<net.minecraft.world.World> worldKey, ServerNbtSidebarManager manager) {
-            this.pos = pos;
-            this.worldKey = worldKey;
-            this.manager = manager;
-        }
+    public record BlockSidebarNbtProvider(BlockPos pos, RegistryKey<net.minecraft.world.World> worldKey) implements SidebarNBTProvider {
+        public static final MapCodec<BlockSidebarNbtProvider> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+                BlockPos.CODEC.fieldOf("pos").forGetter(BlockSidebarNbtProvider::pos),
+                Identifier.CODEC.xmap(id -> RegistryKey.of(RegistryKeys.WORLD, id), RegistryKey::getValue).fieldOf("world").forGetter(BlockSidebarNbtProvider::worldKey)
+        ).apply(instance, BlockSidebarNbtProvider::new));
 
         @Override
-        public NbtCompound getNbt(RegistryWrapper.WrapperLookup registryLookup) {
+        public NbtCompound getNbt(RegistryWrapper.WrapperLookup registryLookup, ServerNbtSidebarManager manager) {
             var world = manager.server.getWorld(worldKey);
             if(world == null) return null;
             var blockEntity = world.getWorldChunk(pos).getBlockEntity(pos);
             return blockEntity == null ? null : blockEntity.createNbt(registryLookup);
-        }
-
-        @Override
-        public void writeProviderDataToNbt(NbtCompound nbt) {
-            nbt.put("pos", BlockPos.CODEC.encode(pos, NbtOps.INSTANCE, NbtEnd.INSTANCE).getOrThrow());
-            nbt.putString("world", worldKey.getValue().toString());
         }
 
         @Override
@@ -386,35 +333,26 @@ public class ServerNbtSidebarManager extends PersistentState {
             return "[%d;%d;%d]-%s".formatted(pos.getX(), pos.getY(), pos.getZ(), worldKey.getValue().toString());
         }
 
-        public static BlockSidebarNbtProvider fromNbt(NbtCompound nbt, ServerNbtSidebarManager manager) {
-            var pos = BlockPos.CODEC.parse(NbtOps.INSTANCE, nbt.get("pos")).getOrThrow();
-            var worldKey = RegistryKey.of(RegistryKeys.WORLD, Identifier.of(nbt.getString("world")));
-            return new BlockSidebarNbtProvider(pos, worldKey, manager);
+        @Override
+        public String getProviderTypeName() {
+            return BLOCK_DATA_OBJECT_TYPE;
         }
     }
 
-    public static class StorageSidebarNbtProvider implements SidebarNBTProvider {
-        private final Identifier id;
-        private final ServerNbtSidebarManager manager;
-
-        public StorageSidebarNbtProvider(Identifier id, ServerNbtSidebarManager manager) {
-            this.id = id;
-            this.manager = manager;
-        }
+    public record StorageSidebarNbtProvider(Identifier id) implements SidebarNBTProvider {
+        private static final MapCodec<StorageSidebarNbtProvider> CODEC = Identifier.CODEC.xmap(
+                StorageSidebarNbtProvider::new,
+                StorageSidebarNbtProvider::id
+        ).fieldOf("id");
 
         @Override
-        public NbtCompound getNbt(RegistryWrapper.WrapperLookup registryLookup) {
+        public NbtCompound getNbt(RegistryWrapper.WrapperLookup registryLookup, ServerNbtSidebarManager manager) {
             try {
                 return manager.server.getDataCommandStorage().get(id);
             } catch(NullPointerException e) {
                 //Thrown when dataCommandStorage is null
                 return null;
             }
-        }
-
-        @Override
-        public void writeProviderDataToNbt(NbtCompound nbt) {
-            nbt.putString("id", id.toString());
         }
 
         @Override
@@ -427,8 +365,9 @@ public class ServerNbtSidebarManager extends PersistentState {
             return id.toString();
         }
 
-        public static StorageSidebarNbtProvider fromNbt(NbtCompound nbt, ServerNbtSidebarManager manager) {
-            return new StorageSidebarNbtProvider(Identifier.of(nbt.getString("id")), manager);
+        @Override
+        public String getProviderTypeName() {
+            return STORAGE_DATA_OBJECT_TYPE;
         }
     }
 }

@@ -32,7 +32,8 @@ public class MinecraftServerMixin implements ServerNbtSidebarManagerContainer  {
             )
     )
     private PersistentStateManager multiScoreboard$initNbtSideManager(PersistentStateManager persistentStateManager) {
-        multiScoreboard$nbtSidebarManager = persistentStateManager.getOrCreate(ServerNbtSidebarManager.getPersistentStateType((MinecraftServer)(Object)this), "multiscoreboard_nbt");
+        //noinspection DataFlowIssue
+        multiScoreboard$nbtSidebarManager = persistentStateManager.getOrCreate(ServerNbtSidebarManager.getPersistentStateType((MinecraftServer)(Object)this));
         return persistentStateManager;
     }
 

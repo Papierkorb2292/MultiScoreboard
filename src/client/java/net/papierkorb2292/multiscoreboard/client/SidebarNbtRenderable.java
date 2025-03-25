@@ -96,7 +96,7 @@ public class SidebarNbtRenderable implements SidebarRenderable {
     }
 
     private int countElements(NbtElement element) {
-        if (element instanceof AbstractNbtList<?> list) {
+        if (element instanceof AbstractNbtList list) {
             return list.size();
         }
         if (element instanceof NbtCompound compound) {
@@ -208,19 +208,19 @@ public class SidebarNbtRenderable implements SidebarRenderable {
             visitAbstractList(element, null);
         }
 
-        private void visitAbstractList(AbstractNbtList<?> element, @Nullable String typePrefix) {
+        private void visitAbstractList(AbstractNbtList element, @Nullable String typePrefix) {
             text.append(Text.literal("["));
             if(typePrefix != null) {
                 text.append(Text.literal(typePrefix)
                         .styled(style -> style.withFormatting(TYPE_SUFFIX_FORMATTING))
                 ).append(Text.literal("; "));
             }
-            for (int i = 0; i < element.size(); i++) {
+            for(int i = 0; i < element.size(); i++) {
                 if(entriesLeft <= 0) {
                     text.append(Text.literal("...]"));
                     return;
                 }
-                element.get(i).accept(this);
+                element.method_10534(i).accept(this);
                 entriesLeft--;
                 if (i < element.size() - 1) {
                     text.append(Text.literal(", "));
@@ -349,11 +349,11 @@ public class SidebarNbtRenderable implements SidebarRenderable {
             visitAbstractList(element);
         }
 
-        private void visitAbstractList(AbstractNbtList<?> element) {
+        private void visitAbstractList(AbstractNbtList element) {
             var arrayEntries = new ArrayList<Entry>();
             for(int i = 0; i < Math.min(element.size(), getNextEntryCount()); i++) {
                 var nestedVisitor = new NestedNbtVisitor();
-                element.get(i).accept(nestedVisitor);
+                element.method_10534(i).accept(nestedVisitor);
                 arrayEntries.add(new Entry(getIndexText(i), nestedVisitor.text));
             }
             entries.add(arrayEntries);

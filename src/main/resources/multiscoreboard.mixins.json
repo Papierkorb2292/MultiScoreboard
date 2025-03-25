@@ -12,7 +12,6 @@
     "PlayerManagerMixin",
     "ScoreboardCommandMixin",
     "ScoreboardMixin",
-    "ScoreboardStateMixin",
     "ServerPlayNetworkHandlerMixin",
     "ServerScoreboardMixin",
     "StorageDataObjectAccessor"
