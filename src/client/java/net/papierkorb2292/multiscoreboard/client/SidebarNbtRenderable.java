@@ -46,7 +46,7 @@ public class SidebarNbtRenderable implements SidebarRenderable {
         var title = Text.of(nbtSidebarName);
         var entries = new ArrayList<List<TopLevelNbtVisitor.Entry>>();
         if(!nbt.isEmpty()) {
-            var content = new TopLevelNbtVisitor(MAX_ENTRIES / nbt.size(), MAX_ENTRIES % nbt.size(), entries);
+            var content = new TopLevelNbtVisitor(buildEntryDistribution(), entries);
             for (NbtElement element : nbt) {
                 element.accept(content);
             }
@@ -109,6 +109,20 @@ public class SidebarNbtRenderable implements SidebarRenderable {
     private int getTotalEntriesCount() {
         if(nbt.isEmpty()) return 1; // Still displaying an info text that there is no data
         return Math.min(nbt.stream().mapToInt(this::countElements).sum(), MAX_ENTRIES);
+    }
+
+    private int[] buildEntryDistribution() {
+        var result = new int[nbt.size()];
+        var remainingEntries = getTotalEntriesCount();
+        while(true) {
+            for(int i = 0; i < result.length; i++) {
+                if(result[i] >= countElements(nbt.get(i)))
+                    continue;
+                result[i]++;
+                if(--remainingEntries < 1)
+                    return result;
+            }
+        }
     }
 
     @Override
@@ -261,13 +275,12 @@ public class SidebarNbtRenderable implements SidebarRenderable {
 
     private static class TopLevelNbtVisitor implements NbtElementVisitor {
 
-        public final int entriesPerVisitor;
-        public int entriesPerVisitorRest;
+        public final int[] visitorEntryCount;
         public List<List<Entry>> entries;
+        public int currentVisitorIndex = 0;
 
-        public TopLevelNbtVisitor(int entriesPerVisitor, int entriesPerVisitorRest, List<List<Entry>> entries) {
-            this.entriesPerVisitor = entriesPerVisitor;
-            this.entriesPerVisitorRest = entriesPerVisitorRest;
+        public TopLevelNbtVisitor(int[] visitorEntryCount, List<List<Entry>> entries) {
+            this.visitorEntryCount = visitorEntryCount;
             this.entries = entries;
         }
 
@@ -379,11 +392,7 @@ public class SidebarNbtRenderable implements SidebarRenderable {
         public void visitEnd(NbtEnd element) { }
 
         private int getNextEntryCount() {
-            if(entriesPerVisitorRest > 0) {
-                entriesPerVisitorRest--;
-                return entriesPerVisitor + 1;
-            }
-            return entriesPerVisitor;
+            return visitorEntryCount[currentVisitorIndex++];
         }
 
         private record Entry(@Nullable Text key, Text value) { }
