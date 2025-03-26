@@ -16,8 +16,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtEnd;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.RegistryWrapper;
@@ -44,7 +42,7 @@ public class ServerNbtSidebarManager extends PersistentState {
 
     public static final NbtPathArgumentType.NbtPath ROOT_PATH;
 
-    private static final Codec<Map<String, Entry>> CODEC = Codec.unboundedMap(Codec.STRING, Entry.CODEC);
+    private static final Codec<Map<String, Entry>> ENTRY_MAP_CODEC = Codec.unboundedMap(Codec.STRING, Entry.CODEC);
 
     static {
         try {
@@ -184,7 +182,7 @@ public class ServerNbtSidebarManager extends PersistentState {
         return new PersistentStateType<>(
                 "multiscoreboard_nbt",
                 () -> new ServerNbtSidebarManager(server),
-                CODEC.xmap(entries -> new ServerNbtSidebarManager(server, entries), manager -> manager.entries),
+                ENTRY_MAP_CODEC.fieldOf("entries").codec().xmap(entries -> new ServerNbtSidebarManager(server, entries), manager -> manager.entries),
                 null
         );
     }
