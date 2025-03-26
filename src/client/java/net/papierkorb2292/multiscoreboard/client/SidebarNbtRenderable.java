@@ -369,7 +369,8 @@ public class SidebarNbtRenderable implements SidebarRenderable {
 
         private void visitAbstractList(AbstractNbtList element) {
             var arrayEntries = new ArrayList<Entry>();
-            for(int i = 0; i < Math.min(element.size(), getNextEntryCount()); i++) {
+            var endIndex = Math.min(element.size(), getNextEntryCount());
+            for(int i = 0; i < endIndex; i++) {
                 var nestedVisitor = new NestedNbtVisitor();
                 element.method_10534(i).accept(nestedVisitor);
                 arrayEntries.add(new Entry(getIndexText(i), nestedVisitor.text));
