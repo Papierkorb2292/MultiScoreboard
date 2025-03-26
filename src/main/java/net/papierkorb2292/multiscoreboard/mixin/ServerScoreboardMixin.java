@@ -14,6 +14,7 @@ import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.scoreboard.ScoreboardState;
 import net.minecraft.scoreboard.ServerScoreboard;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.Unit;
 import net.minecraft.world.PersistentState;
 import net.papierkorb2292.multiscoreboard.MultiScoreboardSidebarInterface;
 import net.papierkorb2292.multiscoreboard.ToggleSingleScoreSidebarS2CPacket;
@@ -107,16 +108,16 @@ public abstract class ServerScoreboardMixin extends ScoreboardMixin {
                 scoreboard::getNullableObjective,
                 ScoreboardObjective::getName
         );
-        Codec<Void> objectiveSidebarCodec = objectiveNameCodec.listOf().xmap(
+        Codec<Unit> objectiveSidebarCodec = objectiveNameCodec.listOf().xmap(
                 objectives -> {
                     for (var objective : objectives)
                         if (objective != null)
                             scoreboard.setObjectiveSlot(ScoreboardDisplaySlot.SIDEBAR, objective);
-                    return null;
+                    return Unit.INSTANCE;
                 },
-                _void -> new ArrayList<>(((MultiScoreboardSidebarInterface) scoreboard).multiScoreboard$getSidebarObjectives())
+                unit -> new ArrayList<>(((MultiScoreboardSidebarInterface) scoreboard).multiScoreboard$getSidebarObjectives())
         );
-        Codec<Void> singleScoreSidebarCodec = Codec.unboundedMap(
+        Codec<Unit> singleScoreSidebarCodec = Codec.unboundedMap(
                 objectiveNameCodec,
                 Codec.STRING.listOf().<Set<String>>xmap(
                         HashSet::new,
@@ -129,12 +130,12 @@ public abstract class ServerScoreboardMixin extends ScoreboardMixin {
                 for(String name : entry.getValue())
                     ((MultiScoreboardSidebarInterface)scoreboard).multiScoreboard$toggleSingleScoreSidebar(objective, name);
             }
-            return null;
-        }, _void -> ((MultiScoreboardSidebarInterface)scoreboard).multiScoreboard$getSingleScoreSidebars());
-        Codec<Void> customDataCodec = RecordCodecBuilder.create(instance -> instance.group(
-                objectiveSidebarCodec.fieldOf("SidebarSlotObjectives").forGetter(state -> null),
-                singleScoreSidebarCodec.fieldOf("SingleScoreSidebars").forGetter(state -> null)
-        ).apply(instance, (_void1, _void2) -> null));
+            return Unit.INSTANCE;
+        }, unit -> ((MultiScoreboardSidebarInterface)scoreboard).multiScoreboard$getSingleScoreSidebars());
+        Codec<Unit> customDataCodec = RecordCodecBuilder.create(instance -> instance.group(
+                objectiveSidebarCodec.fieldOf("SidebarSlotObjectives").forGetter(state -> Unit.INSTANCE),
+                singleScoreSidebarCodec.fieldOf("SingleScoreSidebars").forGetter(state -> Unit.INSTANCE)
+        ).apply(instance, (_void1, _void2) -> Unit.INSTANCE));
         return new Codec<>() {
             @Override
             public <T> DataResult<Pair<ScoreboardState, T>> decode(DynamicOps<T> ops, T input) {
@@ -145,7 +146,7 @@ public abstract class ServerScoreboardMixin extends ScoreboardMixin {
             @Override
             public <T> DataResult<T> encode(ScoreboardState input, DynamicOps<T> ops, T prefix) {
                 return original.encode(input, ops, prefix).flatMap(result ->
-                        customDataCodec.encode(null, ops, result));
+                        customDataCodec.encode(Unit.INSTANCE, ops, result));
             }
         };
     }
