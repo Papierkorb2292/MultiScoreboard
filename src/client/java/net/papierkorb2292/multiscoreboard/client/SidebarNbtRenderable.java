@@ -114,15 +114,16 @@ public class SidebarNbtRenderable implements SidebarRenderable {
     private int[] buildEntryDistribution() {
         var result = new int[nbt.size()];
         var remainingEntries = getTotalEntriesCount();
-        while(true) {
+        while(remainingEntries > 0) {
             for(int i = 0; i < result.length; i++) {
                 if(result[i] >= countElements(nbt.get(i)))
                     continue;
                 result[i]++;
                 if(--remainingEntries < 1)
-                    return result;
+                    break;
             }
         }
+        return result;
     }
 
     @Override
