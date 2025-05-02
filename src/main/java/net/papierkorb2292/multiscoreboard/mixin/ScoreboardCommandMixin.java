@@ -13,6 +13,7 @@ import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ScoreboardCommand;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
+import net.papierkorb2292.multiscoreboard.MultiScoreboard;
 import net.papierkorb2292.multiscoreboard.MultiScoreboardSidebarInterface;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -72,7 +73,7 @@ public class ScoreboardCommandMixin {
                     var scoreboard = ((MultiScoreboardSidebarInterface)context.getSource().getServer().getScoreboard());
                     var singleScoreSidebars = scoreboard.multiScoreboard$getSingleScoreSidebars();
                     if(singleScoreSidebars.isEmpty()) {
-                        context.getSource().sendFeedback(() -> Text.translatable("multiscoreboard.commands.scoreboard.objectives.display.indivSidebar.removed.none"), false);
+                        context.getSource().sendFeedback(() -> Text.translatable("multiscoreboard.commands.scoreboard.objectives.display.indivSidebar.removedAll.none"), false);
                         return 0;
                     }
                     var count = 0;
@@ -83,7 +84,7 @@ public class ScoreboardCommandMixin {
                         }
                     }
                     var finalCount = count;
-                    context.getSource().sendFeedback(() -> Text.translatable("multiscoreboard.commands.scoreboard.objectives.display.indivSidebar.removedAll", finalCount), false);
+                    context.getSource().sendFeedback(() -> MultiScoreboard.getTranslatableTextWithCount("multiscoreboard.commands.scoreboard.objectives.display.indivSidebar.removedAll", finalCount), false);
                     return count;
                 })
                 .then(CommandManager.argument("objective", ScoreboardObjectiveArgumentType.scoreboardObjective())
@@ -99,7 +100,7 @@ public class ScoreboardCommandMixin {
                             for(var scoreHolder : new ArrayList<>(scoreHolders)) {
                                 scoreboard.multiScoreboard$toggleSingleScoreSidebar(objective, scoreHolder);
                             }
-                            context.getSource().sendFeedback(() -> Text.translatable("multiscoreboard.commands.scoreboard.objectives.display.indivSidebar.removed.count", count, objective.getDisplayName()), false);
+                            context.getSource().sendFeedback(() -> MultiScoreboard.getTranslatableTextWithCount("multiscoreboard.commands.scoreboard.objectives.display.indivSidebar.removed", count, objective.getDisplayName()), false);
                             return count;
                         })
                         .then(CommandManager.argument("target", ScoreHolderArgumentType.scoreHolder())

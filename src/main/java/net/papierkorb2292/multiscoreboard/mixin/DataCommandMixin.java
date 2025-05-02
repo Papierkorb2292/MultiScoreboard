@@ -6,6 +6,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import net.minecraft.command.BlockDataObject;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.DataCommandObject;
 import net.minecraft.command.argument.NbtPathArgumentType;
@@ -13,6 +14,7 @@ import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.DataCommand;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
+import net.papierkorb2292.multiscoreboard.MultiScoreboard;
 import net.papierkorb2292.multiscoreboard.ServerNbtSidebarManager;
 import net.papierkorb2292.multiscoreboard.ServerNbtSidebarManagerContainer;
 import org.jetbrains.annotations.Nullable;
@@ -96,7 +98,18 @@ public abstract class DataCommandMixin {
     private static int multiScoreboard$removeDataObjectSidebar(ServerCommandSource source, DataCommandObject dataObject) {
         var nbtSidebarManager = ((ServerNbtSidebarManagerContainer)source.getServer()).multiScoreboard$getNbtSidebarManager();
         var removedCount = nbtSidebarManager.removeEntriesOfDataObject(dataObject);
-        source.sendFeedback(() -> Text.translatable("multiscoreboard.commands.data.multiscoreboard.remove_data_object", removedCount), false);
+        source.sendFeedback(() -> {
+            Text dataObjectText = switch(dataObject) {
+                case BlockDataObjectAccessor block ->
+                        Text.translatable("multiscoreboard.commands.data.object.block", block.getPos().getX(), block.getPos().getY(), block.getPos().getZ());
+                case EntityDataObjectAccessor entity ->
+                        Text.translatable("multiscoreboard.commands.data.object.entity", entity.getEntity().getDisplayName());
+                case StorageDataObjectAccessor storage ->
+                        Text.translatable("multiscoreboard.commands.data.object.storage", storage.getId());
+                default -> Text.translatable("multiscoreboard.commands.data.object.unknown");
+            };
+            return MultiScoreboard.getTranslatableTextWithCount("multiscoreboard.commands.data.multiscoreboard.removedAll.dataObject", removedCount, dataObjectText);
+        }, false);
         return removedCount;
     }
 
@@ -116,7 +129,7 @@ public abstract class DataCommandMixin {
     private static int multiScoreboard$removeAllNbtSidebars(ServerCommandSource source) {
         var nbtSidebarManager = ((ServerNbtSidebarManagerContainer)source.getServer()).multiScoreboard$getNbtSidebarManager();
         var removedCount = nbtSidebarManager.removeAllEntries();
-        source.sendFeedback(() -> Text.translatable("multiscoreboard.commands.data.multiscoreboard.remove_data_object", removedCount), false);
+        source.sendFeedback(() -> MultiScoreboard.getTranslatableTextWithCount("multiscoreboard.commands.data.multiscoreboard.removedAll", removedCount), false);
         return removedCount;
     }
 }
