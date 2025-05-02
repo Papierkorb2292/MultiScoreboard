@@ -77,7 +77,7 @@ public class ScoreboardCommandMixin {
                     }
                     var count = 0;
                     for(var singleScoreSidebar : new ArrayList<>(singleScoreSidebars.entrySet())) {
-                        for(var scoreHolder : singleScoreSidebar.getValue()) {
+                        for(var scoreHolder : new ArrayList<>(singleScoreSidebar.getValue())) {
                             scoreboard.multiScoreboard$toggleSingleScoreSidebar(singleScoreSidebar.getKey(), scoreHolder);
                             count++;
                         }
