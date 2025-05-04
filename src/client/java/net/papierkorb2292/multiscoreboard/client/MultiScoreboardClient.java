@@ -14,6 +14,8 @@ import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.ScoreboardDisplaySlot;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.scoreboard.Team;
+import net.minecraft.text.Text;
+import net.minecraft.util.Colors;
 import net.minecraft.util.math.MathHelper;
 import net.papierkorb2292.multiscoreboard.*;
 import org.lwjgl.glfw.GLFW;
@@ -31,6 +33,8 @@ public class MultiScoreboardClient implements ClientModInitializer {
     private static KeyBinding scrollDownKeyBinding;
 
     public static final int sidebarGap = 11;
+
+    public static final Text NO_DATA_TEXT = Text.translatable("multiScoreboard.sidebarNbt.noData").styled(style -> style.withColor(Colors.RED));
 
     @Override
     public void onInitializeClient() {

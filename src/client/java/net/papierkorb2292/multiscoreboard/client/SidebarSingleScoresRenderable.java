@@ -71,10 +71,11 @@ public class SidebarSingleScoresRenderable implements SidebarRenderable {
             Team team = objective.getScoreboard().getScoreHolderTeam(name);
             Text nameText = Team.decorateName(team, Text.literal(name));
             var score = objective.getScoreboard().getScore(ScoreHolder.fromName(name), objective);
-            if(score == null) return null;
+            if(score == null)
+                return new Entry(nameText, MultiScoreboardClient.NO_DATA_TEXT);
             var scoreValue = score.getScore();
             return new Entry(nameText, StyledNumberFormat.RED.format(scoreValue));
-        }).filter(Objects::nonNull).sorted(Comparator.comparing(entry -> entry.name.getString())).toList();
+        }).sorted(Comparator.comparing(entry -> entry.name.getString())).toList();
     }
 
     public int getMaxEntryWidth(List<Entry> entries) {

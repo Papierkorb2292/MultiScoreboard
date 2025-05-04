@@ -17,8 +17,6 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 public class SidebarNbtRenderable implements SidebarRenderable {
-
-    private static final Text NO_DATA_TEXT = Text.translatable("multiScoreboard.sidebarNbt.noData").styled(style -> style.withColor(Colors.RED));
     private static final int MAX_ENTRIES = 15;
     private static final int KEY_VALUE_DISTANCE = 10;
 
@@ -51,7 +49,7 @@ public class SidebarNbtRenderable implements SidebarRenderable {
                 element.accept(content);
             }
         } else {
-            entries.add(List.of(new TopLevelNbtVisitor.Entry(null, NO_DATA_TEXT)));
+            entries.add(List.of(new TopLevelNbtVisitor.Entry(null, MultiScoreboardClient.NO_DATA_TEXT)));
         }
         int entryCount = getTotalEntriesCount();
         int titleWidth = textRenderer.getWidth(title);
