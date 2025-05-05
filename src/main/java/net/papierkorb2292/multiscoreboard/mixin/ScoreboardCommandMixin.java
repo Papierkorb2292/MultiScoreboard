@@ -4,11 +4,11 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.suggestion.Suggestions;
+import net.minecraft.command.CommandSource;
 import net.minecraft.command.argument.ScoreHolderArgumentType;
 import net.minecraft.command.argument.ScoreboardObjectiveArgumentType;
-import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.scoreboard.ScoreboardDisplaySlot;
-import net.minecraft.scoreboard.ScoreboardObjective;
+import net.minecraft.scoreboard.*;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ScoreboardCommand;
 import net.minecraft.server.command.ServerCommandSource;
@@ -22,6 +22,7 @@ import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Mixin(ScoreboardCommand.class)
 public class ScoreboardCommandMixin {
@@ -104,6 +105,15 @@ public class ScoreboardCommandMixin {
                             return count;
                         })
                         .then(CommandManager.argument("target", ScoreHolderArgumentType.scoreHolder())
+                                .suggests((context, suggestionsBuilder) -> {
+                                    var objective = ScoreboardObjectiveArgumentType.getObjective(context, "objective");
+                                    var entries = objective.getScoreboard().getScoreboardEntries(objective);
+
+                                    var selectorFuture = ScoreHolderArgumentType.SUGGESTION_PROVIDER.getSuggestions(context, suggestionsBuilder);
+                                    return CommandSource.suggestMatching(entries, suggestionsBuilder, ScoreboardEntry::owner, entry -> entry::owner)
+                                            .thenCombine(selectorFuture, (Suggestions nameSuggestions, Suggestions selectorSuggestions) ->
+                                                    Suggestions.merge(suggestionsBuilder.getInput(), List.of(nameSuggestions, selectorSuggestions)));
+                                })
                                 .executes(context -> {
                                     var objective = ScoreboardObjectiveArgumentType.getObjective(context, "objective");
                                     var target = ScoreHolderArgumentType.getScoreHolder(context, "target").getNameForScoreboard();
