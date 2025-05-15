@@ -35,10 +35,10 @@ public class SidebarObjectiveRenderable implements SidebarRenderable {
         CURRENT_MAX_WIDTH.set(singleScoresRenderable.getMaxEntryWidth(singleScoresEntries));
         ((InGameHudAccessor)inGameHud).callRenderScoreboardSidebar(context, objective);
         if(showSingleScores) {
-            context.getMatrices().push();
-            context.getMatrices().translate(0, calculateVanillaEntriesHeight(), 0);
+            context.getMatrices().pushMatrix();
+            context.getMatrices().translate(0, calculateVanillaEntriesHeight());
             singleScoresRenderable.renderEntries(context, singleScoresEntries, CURRENT_MAX_WIDTH.get());
-            context.getMatrices().pop();
+            context.getMatrices().popMatrix();
         }
         CURRENT_MAX_WIDTH.remove();
     }

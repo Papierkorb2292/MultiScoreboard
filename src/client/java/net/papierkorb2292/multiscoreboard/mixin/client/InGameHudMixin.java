@@ -54,11 +54,11 @@ public abstract class InGameHudMixin {
         var totalRestHeight = calculatedHeights.getFirst();
         scoreboardHeightsRef.set(calculatedHeights.getSecond());
 
-        context.getMatrices().push();
+        context.getMatrices().pushMatrix();
         //noinspection IntegerDivisionInFloatingPointContext
-        context.getMatrices().translate(0, MinecraftClient.getInstance().textRenderer.fontHeight-(teamScoreboardHeight + totalRestHeight)/2 + MultiScoreboardClient.getSidebarScrollTranslation(), 0);
+        context.getMatrices().translate(0, MinecraftClient.getInstance().textRenderer.fontHeight-(teamScoreboardHeight + totalRestHeight)/2 + MultiScoreboardClient.getSidebarScrollTranslation());
         op.call(inGameHud, context, teamObjective);
-        context.getMatrices().translate(0, teamScoreboardHeight, 0);
+        context.getMatrices().translate(0, teamScoreboardHeight);
     }
 
     @Inject(
@@ -77,7 +77,7 @@ public abstract class InGameHudMixin {
         }
         if(sidebarHeightsRef.get().isEmpty()) {
             if(!noTeamScoreboard)
-                context.getMatrices().pop();
+                context.getMatrices().popMatrix();
             return;
         }
 
@@ -86,18 +86,18 @@ public abstract class InGameHudMixin {
                 .iterator();
 
         if(noTeamScoreboard) {
-            context.getMatrices().push();
+            context.getMatrices().pushMatrix();
             //noinspection IntegerDivisionInFloatingPointContext
-            context.getMatrices().translate(0, MinecraftClient.getInstance().textRenderer.fontHeight-totalHeight/2, 0);
-            context.getMatrices().translate(0, MultiScoreboardClient.getSidebarScrollTranslation(), 0);
+            context.getMatrices().translate(0, MinecraftClient.getInstance().textRenderer.fontHeight-totalHeight/2);
+            context.getMatrices().translate(0, MultiScoreboardClient.getSidebarScrollTranslation());
         }
         while(sorted.hasNext()) {
             var renderable = sorted.next();
             renderable.getKey().render(context, (InGameHud)(Object)this);
-            context.getMatrices().translate(0, renderable.getValue() + MultiScoreboardClient.sidebarGap, 0);
+            context.getMatrices().translate(0, renderable.getValue() + MultiScoreboardClient.sidebarGap);
         }
 
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
     }
 
     @ModifyExpressionValue(

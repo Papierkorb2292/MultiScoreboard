@@ -12,10 +12,9 @@ import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.command.DataCommandObject;
 import net.minecraft.command.argument.NbtPathArgumentType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
+import net.minecraft.predicate.NbtPredicate;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.RegistryWrapper;
@@ -273,14 +272,7 @@ public class ServerNbtSidebarManager extends PersistentState {
             for (var world : manager.server.getWorlds()) {
                 var entity = world.getEntity(uuid);
                 if (entity != null) {
-                    final var nbt = entity.writeNbt(new NbtCompound());
-                    if (entity instanceof PlayerEntity player) {
-                        ItemStack itemStack = player.getInventory().getSelectedStack();
-                        if (!itemStack.isEmpty()) {
-                            nbt.put("SelectedItem", itemStack.toNbt(entity.getRegistryManager()));
-                        }
-                    }
-                    return nbt;
+                    return NbtPredicate.entityToNbt(entity);
                 }
             }
             return null;
