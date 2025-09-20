@@ -22,10 +22,10 @@ public class ServerPlayNetworkHandlerMixin {
             },
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/server/network/ServerPlayNetworkHandler;validateMessage(Ljava/lang/String;Ljava/lang/Runnable;)V"
+                    target = "Lnet/minecraft/server/network/ServerPlayNetworkHandler;validateMessage(Ljava/lang/String;ZLjava/lang/Runnable;)V"
             )
     )
-    private void multiScoreboard$findThreadedCommands(ServerPlayNetworkHandler instance, String command, Runnable callback, Operation<Void> original) {
+    private void multiScoreboard$findThreadedCommands(ServerPlayNetworkHandler instance, String command, boolean bl, Runnable callback, Operation<Void> original) {
         try {
             for(var threadedCommand : MultiScoreboard.THREADED_COMMANDS) {
                 if (command.startsWith(threadedCommand)) {
@@ -33,7 +33,7 @@ public class ServerPlayNetworkHandlerMixin {
                     break;
                 }
             }
-            original.call(instance, command, callback);
+            original.call(instance, command, bl, callback);
         } finally {
             multiScoreboard$useThreadedCommandForValidateMessageCallback.remove();
         }

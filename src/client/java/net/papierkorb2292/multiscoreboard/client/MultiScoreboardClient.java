@@ -16,6 +16,7 @@ import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.text.Text;
 import net.minecraft.util.Colors;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.papierkorb2292.multiscoreboard.*;
 import org.lwjgl.glfw.GLFW;
@@ -49,7 +50,7 @@ public class MultiScoreboardClient implements ClientModInitializer {
             clampScrollTranslation();
         });
         ClientPlayNetworking.registerGlobalReceiver(ToggleSingleScoreSidebarS2CPacket.ID, (packet, context) -> {
-            var scoreboard = context.player().getScoreboard();
+            var scoreboard = context.player().getEntityWorld().getScoreboard();
             var objective = scoreboard.getNullableObjective(packet.objective());
             if(objective == null) return;
             ((MultiScoreboardSidebarInterface)scoreboard).multiScoreboard$toggleSingleScoreSidebar(objective, packet.score());
@@ -59,17 +60,18 @@ public class MultiScoreboardClient implements ClientModInitializer {
             nbtSidebars.clear();
         });
 
+        final KeyBinding.Category keybindCategory = KeyBinding.Category.create(Identifier.of("multiscoreboard", "generic"));
         scrollUpKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.multiscoreboard.scroll_up",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_UP,
-                "category.multiscoreboard"
+                keybindCategory
         ));
         scrollDownKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.multiscoreboard.scroll_down",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_DOWN,
-                "category.multiscoreboard"
+                keybindCategory
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -97,7 +99,7 @@ public class MultiScoreboardClient implements ClientModInitializer {
                 sidebarScrollTranslation = 0;
                 return;
             }
-            var shouldJumpScoreboard = InputUtil.isKeyPressed(client.getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_CONTROL);
+            var shouldJumpScoreboard = InputUtil.isKeyPressed(client.getWindow(), GLFW.GLFW_KEY_LEFT_CONTROL);
             if(shouldJumpScoreboard) {
                 if(wasUpPressed) {
                     do {
@@ -142,7 +144,7 @@ public class MultiScoreboardClient implements ClientModInitializer {
 
     public static void clampScrollTranslation() {
         var player = Objects.requireNonNull(MinecraftClient.getInstance().player);
-        var scoreboard = player.getWorld().getScoreboard();
+        var scoreboard = player.getEntityWorld().getScoreboard();
         Team team = scoreboard.getScoreHolderTeam(player.getNameForScoreboard());
         ScoreboardDisplaySlot scoreboardDisplaySlot;
         ScoreboardObjective teamObjective = null;
