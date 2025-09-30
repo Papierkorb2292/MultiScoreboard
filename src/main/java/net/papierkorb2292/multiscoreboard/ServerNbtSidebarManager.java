@@ -63,6 +63,7 @@ public class ServerNbtSidebarManager extends PersistentState {
     public ServerNbtSidebarManager(MinecraftServer server, Map<String, Entry> entries) {
         this.server = server;
         this.entries = new HashMap<>(entries);
+        tick(); // Make sure to populate all lastSentNbt fields
     }
 
     public void tick() {
