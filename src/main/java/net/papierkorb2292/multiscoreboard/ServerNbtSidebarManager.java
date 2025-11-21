@@ -75,7 +75,7 @@ public class ServerNbtSidebarManager extends PersistentState {
     /**
      * Adds a new NBT sidebar.
      * @param name The name of the sidebar. If null, a default name will be used consisting of the dataObject and path
-     * @param dataObject The data source object to get the NBT data from.
+     * @param dataObject The 9data source object to get the NBT data from.
      * @param path The path to the NBT data.
      * @return The name of the added sidebar.
      * @throws CommandSyntaxException If the data source object is not a valid data source.

@@ -1,5 +1,6 @@
 package net.papierkorb2292.multiscoreboard.mixin;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.PersistentStateManager;
 import net.papierkorb2292.multiscoreboard.ServerNbtSidebarManager;
@@ -24,11 +25,11 @@ public class MinecraftServerMixin implements ServerNbtSidebarManagerContainer  {
         return multiScoreboard$nbtSidebarManager;
     }
 
-    @ModifyArg(
+    @ModifyExpressionValue(
             method = "createWorlds",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/server/MinecraftServer;initScoreboard(Lnet/minecraft/world/PersistentStateManager;)V"
+                    target = "Lnet/minecraft/server/world/ServerWorld;getPersistentStateManager()Lnet/minecraft/world/PersistentStateManager;"
             )
     )
     private PersistentStateManager multiScoreboard$initNbtSideManager(PersistentStateManager persistentStateManager) {

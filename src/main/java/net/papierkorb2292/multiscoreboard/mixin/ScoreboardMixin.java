@@ -4,7 +4,9 @@ import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.ScoreboardDisplaySlot;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import net.papierkorb2292.multiscoreboard.MultiScoreboardSidebarInterface;
+import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -13,7 +15,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.*;
 
 @Mixin(Scoreboard.class)
-public class ScoreboardMixin implements MultiScoreboardSidebarInterface {
+public abstract class ScoreboardMixin implements MultiScoreboardSidebarInterface {
+
+    @Shadow
+    public abstract @Nullable ScoreboardObjective getNullableObjective(@Nullable String name);
 
     @Unique
     protected final Set<ScoreboardObjective> multiScoreboard$sidebarObjectives = new HashSet<>();
