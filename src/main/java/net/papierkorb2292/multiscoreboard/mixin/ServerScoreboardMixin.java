@@ -10,7 +10,6 @@ import net.minecraft.scoreboard.ScoreboardState;
 import net.minecraft.scoreboard.ServerScoreboard;
 import net.minecraft.server.MinecraftServer;
 import net.papierkorb2292.multiscoreboard.CustomSidebarPacked;
-import net.papierkorb2292.multiscoreboard.MultiScoreboardRecordRecorder;
 import net.papierkorb2292.multiscoreboard.ToggleSingleScoreSidebarS2CPacket;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
@@ -24,7 +23,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Mixin(ServerScoreboard.class)
-public abstract class ServerScoreboardMixin extends ScoreboardMixin {
+public abstract class ServerScoreboardMixin extends ScoreboardMixin implements CustomSidebarPacked.Container {
 
     @Shadow @Final private MinecraftServer server;
 
@@ -100,21 +99,28 @@ public abstract class ServerScoreboardMixin extends ScoreboardMixin {
     }
 
     @Inject(
-            method = "read",
-            at = @At("RETURN")
+            method = "writeTo",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/scoreboard/ScoreboardState;set(Lnet/minecraft/scoreboard/ScoreboardState$Packed;)V"
+            )
     )
-    private void multiScoreboard$readCustomSidebar(ScoreboardState.Packed packed, CallbackInfo ci) {
-        final var customPacked = MultiScoreboardRecordRecorder.CUSTOM_SIDEBAR_KEY.getOrNull(packed);
-        if(customPacked == null)
+    private void multiScoreboard$writeCustomSidebarPacked(ScoreboardState state, CallbackInfo ci) {
+        ((CustomSidebarPacked.Container)state).multiScoreboard$setCustomSidebarPacked(multiScoreboard$getCustomSidebarPacked());
+    }
+
+    @Override
+    public void multiScoreboard$setCustomSidebarPacked(CustomSidebarPacked packed) {
+        if(packed == null)
             return;
 
-        for(final var objectiveName : customPacked.sidebarObjectives()) {
+        for(final var objectiveName : packed.sidebarObjectives()) {
             final var objective = getNullableObjective(objectiveName);
             if (objective != null)
                 setObjectiveSlot(ScoreboardDisplaySlot.SIDEBAR, objective);
         }
 
-        for(final var entry : customPacked.singleScoreSidebarObjectives().entrySet()) {
+        for(final var entry : packed.singleScoreSidebarObjectives().entrySet()) {
             final var objectiveName = entry.getKey();
             final var  objective = getNullableObjective(objectiveName);
             if(objective == null) continue;
@@ -123,18 +129,14 @@ public abstract class ServerScoreboardMixin extends ScoreboardMixin {
         }
     }
 
-    @ModifyReturnValue(
-            method = "toPacked",
-            at = @At("RETURN")
-    )
-    private ScoreboardState.Packed multiScoreboard$packCustomSidebar(ScoreboardState.Packed original) {
-        final var customPacked = new CustomSidebarPacked(
+    @Override
+    public CustomSidebarPacked multiScoreboard$getCustomSidebarPacked() {
+        return new CustomSidebarPacked(
             multiScoreboard$sidebarObjectives.stream().map(ScoreboardObjective::getName).toList(),
             multiScoreboard$singleScoreSidebars.entrySet().stream().collect(Collectors.toMap(
                     entry -> entry.getKey().getName(),
                     entry -> new ArrayList<>(entry.getValue())
             ))
         );
-        return MultiScoreboardRecordRecorder.copyScoreboardStateWithCustomState(original, customPacked);
     }
 }

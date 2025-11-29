@@ -14,7 +14,8 @@
     "ScoreboardMixin",
     "ServerPlayNetworkHandlerMixin",
     "ServerScoreboardMixin",
-    "StorageDataObjectAccessor"
+    "StorageDataObjectAccessor",
+    "ScoreboardStateMixin"
   ],
   "injectors": {
     "defaultRequire": 1

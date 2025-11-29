@@ -16,18 +16,14 @@
 		],
 		"client": [
 			"net.papierkorb2292.multiscoreboard.client.MultiScoreboardClient"
-		],
-        "recordrecoder:register": [
-          "net.papierkorb2292.multiscoreboard.MultiScoreboardRecordRecorder"
-        ]
+		]
     },
 	"mixins": [
 		"multiscoreboard.mixins.json",
         {
           "config": "multiscoreboard.client.mixins.json",
           "environment": "client"
-        },
-        "recordrecoder.mixins.json"
+        }
 	],
 	"depends": {
 		"fabricloader": ">=0.15.0",
