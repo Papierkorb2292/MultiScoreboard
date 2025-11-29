@@ -86,6 +86,7 @@ public abstract class ServerScoreboardMixin extends ScoreboardMixin {
     @Override
     public boolean multiScoreboard$toggleSingleScoreSidebar(ScoreboardObjective objective, String scoreHolder) {
         var added = super.multiScoreboard$toggleSingleScoreSidebar(objective, scoreHolder);
+        markDirty();
         if(added) {
             if(!syncableObjectives.contains(objective)) startSyncing(objective);
         } else {
