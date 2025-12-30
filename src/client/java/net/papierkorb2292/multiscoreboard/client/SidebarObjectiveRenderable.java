@@ -1,26 +1,26 @@
 package net.papierkorb2292.multiscoreboard.client;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.hud.InGameHud;
-import net.minecraft.scoreboard.ScoreboardObjective;
-import net.papierkorb2292.multiscoreboard.mixin.client.InGameHudAccessor;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.world.scores.Objective;
+import net.papierkorb2292.multiscoreboard.mixin.client.GuiAccessor;
 
 public class SidebarObjectiveRenderable implements SidebarRenderable {
 
     public static final ThreadLocal<Integer> CURRENT_MAX_WIDTH = new ThreadLocal<>();
 
-    private final ScoreboardObjective objective;
+    private final Objective objective;
     private final SidebarSingleScoresRenderable singleScoresRenderable;
     private final boolean showSingleScores;
 
-    public SidebarObjectiveRenderable(ScoreboardObjective objective, boolean showSingleScores) {
+    public SidebarObjectiveRenderable(Objective objective, boolean showSingleScores) {
         this.objective = objective;
         this.singleScoresRenderable = new SidebarSingleScoresRenderable(objective);
         this.showSingleScores = showSingleScores;
     }
 
-    public SidebarObjectiveRenderable(ScoreboardObjective objective) {
+    public SidebarObjectiveRenderable(Objective objective) {
         this(objective, true);
     }
 
@@ -30,26 +30,26 @@ public class SidebarObjectiveRenderable implements SidebarRenderable {
     }
 
     @Override
-    public void render(DrawContext context, InGameHud inGameHud) {
+    public void render(GuiGraphics context, Gui inGameHud) {
         var singleScoresEntries = singleScoresRenderable.buildEntries();
         CURRENT_MAX_WIDTH.set(singleScoresRenderable.getMaxEntryWidth(singleScoresEntries));
-        ((InGameHudAccessor)inGameHud).callRenderScoreboardSidebar(context, objective);
+        ((GuiAccessor)inGameHud).callDisplayScoreboardSidebar(context, objective);
         if(showSingleScores) {
-            context.getMatrices().pushMatrix();
-            context.getMatrices().translate(0, calculateVanillaEntriesHeight());
+            context.pose().pushMatrix();
+            context.pose().translate(0, calculateVanillaEntriesHeight());
             singleScoresRenderable.renderEntries(context, singleScoresEntries, CURRENT_MAX_WIDTH.get());
-            context.getMatrices().popMatrix();
+            context.pose().popMatrix();
         }
         CURRENT_MAX_WIDTH.remove();
     }
 
     private int calculateVanillaEntriesHeight() {
-        return Math.min(15, objective.getScoreboard().getScoreboardEntries(objective).size()) * MinecraftClient.getInstance().textRenderer.fontHeight;
+        return Math.min(15, objective.getScoreboard().listPlayerScores(objective).size()) * Minecraft.getInstance().font.lineHeight;
     }
 
     @Override
     public int calculateHeight() {
-        final var vanillaHeight = MinecraftClient.getInstance().textRenderer.fontHeight + calculateVanillaEntriesHeight();
+        final var vanillaHeight = Minecraft.getInstance().font.lineHeight + calculateVanillaEntriesHeight();
         if(!showSingleScores)
             return vanillaHeight;
         return vanillaHeight + singleScoresRenderable.getEntriesHeight();

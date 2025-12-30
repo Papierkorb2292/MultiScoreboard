@@ -1,14 +1,29 @@
 package net.papierkorb2292.multiscoreboard.client;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.hud.InGameHud;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.nbt.*;
-import net.minecraft.nbt.visitor.NbtElementVisitor;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Colors;
-import net.minecraft.util.Formatting;
+import net.minecraft.nbt.ByteArrayTag;
+import net.minecraft.nbt.ByteTag;
+import net.minecraft.nbt.CollectionTag;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.DoubleTag;
+import net.minecraft.nbt.EndTag;
+import net.minecraft.nbt.FloatTag;
+import net.minecraft.nbt.IntArrayTag;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.LongArrayTag;
+import net.minecraft.nbt.LongTag;
+import net.minecraft.nbt.ShortTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.TagVisitor;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.CommonColors;
+import net.minecraft.ChatFormatting;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -20,15 +35,15 @@ public class SidebarNbtRenderable implements SidebarRenderable {
     private static final int MAX_ENTRIES = 15;
     private static final int KEY_VALUE_DISTANCE = 10;
 
-    private static final Formatting TAG_FORMATTING = Formatting.AQUA;
-    private static final Formatting STRING_FORMATTING = Formatting.GREEN;
-    private static final Formatting NUMBER_FORMATTING = Formatting.GOLD;
-    private static final Formatting TYPE_SUFFIX_FORMATTING = Formatting.RED;
+    private static final ChatFormatting TAG_FORMATTING = ChatFormatting.AQUA;
+    private static final ChatFormatting STRING_FORMATTING = ChatFormatting.GREEN;
+    private static final ChatFormatting NUMBER_FORMATTING = ChatFormatting.GOLD;
+    private static final ChatFormatting TYPE_SUFFIX_FORMATTING = ChatFormatting.RED;
 
     private final String nbtSidebarName;
-    private final List<NbtElement> nbt;
+    private final List<Tag> nbt;
 
-    public SidebarNbtRenderable(String nbtSidebarName, List<NbtElement> nbt) {
+    public SidebarNbtRenderable(String nbtSidebarName, List<Tag> nbt) {
         this.nbtSidebarName = nbtSidebarName;
         this.nbt = nbt;
     }
@@ -39,67 +54,67 @@ public class SidebarNbtRenderable implements SidebarRenderable {
     }
 
     @Override
-    public void render(DrawContext context, InGameHud inGameHud) {
-        var textRenderer = MinecraftClient.getInstance().textRenderer;
-        var title = Text.of(nbtSidebarName);
+    public void render(GuiGraphics context, Gui inGameHud) {
+        var textRenderer = Minecraft.getInstance().font;
+        var title = Component.nullToEmpty(nbtSidebarName);
         var entries = new ArrayList<List<TopLevelNbtVisitor.Entry>>();
         if(!nbt.isEmpty()) {
             var content = new TopLevelNbtVisitor(buildEntryDistribution(), entries);
-            for (NbtElement element : nbt) {
+            for (Tag element : nbt) {
                 element.accept(content);
             }
         } else {
             entries.add(List.of(new TopLevelNbtVisitor.Entry(null, MultiScoreboardClient.NO_DATA_TEXT)));
         }
         int entryCount = getTotalEntriesCount();
-        int titleWidth = textRenderer.getWidth(title);
-        int entriesHeight = entryCount * textRenderer.fontHeight;
+        int titleWidth = textRenderer.width(title);
+        int entriesHeight = entryCount * textRenderer.lineHeight;
         int maxWidth = titleWidth;
         for(var section : entries) {
             for(var entry : section) {
-                int width = textRenderer.getWidth(entry.value);
+                int width = textRenderer.width(entry.value);
                 if(entry.key != null) {
-                    width += textRenderer.getWidth(entry.key) + KEY_VALUE_DISTANCE;
+                    width += textRenderer.width(entry.key) + KEY_VALUE_DISTANCE;
                 }
                 maxWidth = Math.max(maxWidth, width);
             }
         }
-        int lowerY = context.getScaledWindowHeight() / 2 + entriesHeight;
+        int lowerY = context.guiHeight() / 2 + entriesHeight;
         int border = 3;
-        int leftX = context.getScaledWindowWidth() - maxWidth - border;
-        int rightX = context.getScaledWindowWidth() - border + 2;
-        int entryBackgroundColor = MinecraftClient.getInstance().options.getTextBackgroundColor(0.3f);
-        int titleBackgroundColor = MinecraftClient.getInstance().options.getTextBackgroundColor(0.4f);
+        int leftX = context.guiWidth() - maxWidth - border;
+        int rightX = context.guiWidth() - border + 2;
+        int entryBackgroundColor = Minecraft.getInstance().options.getBackgroundColor(0.3f);
+        int titleBackgroundColor = Minecraft.getInstance().options.getBackgroundColor(0.4f);
         int titleLowerY = lowerY - entriesHeight;
-        context.fill(leftX - 2, titleLowerY - textRenderer.fontHeight - 1, rightX, titleLowerY - 1, titleBackgroundColor);
+        context.fill(leftX - 2, titleLowerY - textRenderer.lineHeight - 1, rightX, titleLowerY - 1, titleBackgroundColor);
         context.fill(leftX - 2, titleLowerY - 1, rightX, lowerY, entryBackgroundColor);
-        context.drawText(textRenderer, title, leftX + maxWidth / 2 - titleWidth / 2, titleLowerY - textRenderer.fontHeight, Colors.WHITE, false);
+        context.drawString(textRenderer, title, leftX + maxWidth / 2 - titleWidth / 2, titleLowerY - textRenderer.lineHeight, CommonColors.WHITE, false);
         var i = 0;
         for(var section : entries) {
             for(var entry : section) {
-                int entryY = lowerY - (entryCount - i++) * textRenderer.fontHeight;
-                var valueWidth = textRenderer.getWidth(entry.value);
+                int entryY = lowerY - (entryCount - i++) * textRenderer.lineHeight;
+                var valueWidth = textRenderer.width(entry.value);
                 if(entry.key == null) {
-                    context.drawText(textRenderer, entry.value, leftX + maxWidth / 2 - valueWidth / 2, entryY, Colors.WHITE, false);
+                    context.drawString(textRenderer, entry.value, leftX + maxWidth / 2 - valueWidth / 2, entryY, CommonColors.WHITE, false);
                     continue;
                 }
-                context.drawText(textRenderer, entry.key, leftX, entryY, Colors.WHITE, false);
-                context.drawText(textRenderer, entry.value, leftX + maxWidth - valueWidth, entryY, Colors.WHITE, false);
+                context.drawString(textRenderer, entry.key, leftX, entryY, CommonColors.WHITE, false);
+                context.drawString(textRenderer, entry.value, leftX + maxWidth - valueWidth, entryY, CommonColors.WHITE, false);
             }
             if(i != entryCount) {
-                int separationY = lowerY - (entryCount - i) * textRenderer.fontHeight;
+                int separationY = lowerY - (entryCount - i) * textRenderer.lineHeight;
                 context.fill(leftX - 2, separationY - 1, rightX, separationY, 0xAA666666);
             }
 
         }
     }
 
-    private int countElements(NbtElement element) {
-        if (element instanceof AbstractNbtList list) {
+    private int countElements(Tag element) {
+        if (element instanceof CollectionTag list) {
             return list.size();
         }
-        if (element instanceof NbtCompound compound) {
-            return compound.getKeys().size();
+        if (element instanceof CompoundTag compound) {
+            return compound.keySet().size();
         }
         return 1;
     }
@@ -126,153 +141,153 @@ public class SidebarNbtRenderable implements SidebarRenderable {
 
     @Override
     public int calculateHeight() {
-        return (1 + getTotalEntriesCount()) * MinecraftClient.getInstance().textRenderer.fontHeight;
+        return (1 + getTotalEntriesCount()) * Minecraft.getInstance().font.lineHeight;
     }
 
-    private static MutableText getIndexText(int index) {
-        return Text.literal(String.valueOf(index)).styled(style -> style.withFormatting(TAG_FORMATTING));
+    private static MutableComponent getIndexText(int index) {
+        return Component.literal(String.valueOf(index)).withStyle(style -> style.applyFormat(TAG_FORMATTING));
     }
 
     private static Pattern TAG_QUOTATION_UNNECESSARY_PATTERN = Pattern.compile("[A-Za-z._]+[A-Za-z0-9._+-]*");
 
-    private static MutableText getTagText(String tag) {
+    private static MutableComponent getTagText(String tag) {
         if(!TAG_QUOTATION_UNNECESSARY_PATTERN.matcher(tag).matches())
-            tag = NbtString.escape(tag);
-        return Text.literal(tag).styled(style -> style.withFormatting(TAG_FORMATTING));
+            tag = StringTag.quoteAndEscape(tag);
+        return Component.literal(tag).withStyle(style -> style.applyFormat(TAG_FORMATTING));
     }
 
-    private static class NestedNbtVisitor implements NbtElementVisitor {
+    private static class NestedNbtVisitor implements TagVisitor {
 
         private int entriesLeft = 3;
 
-        public MutableText text = Text.literal("");
+        public MutableComponent text = Component.literal("");
 
         @Override
-        public void visitString(NbtString element) {
-            text.append(Text.literal(element.toString())
-                    .styled(style -> style.withFormatting(STRING_FORMATTING))
+        public void visitString(StringTag element) {
+            text.append(Component.literal(element.toString())
+                    .withStyle(style -> style.applyFormat(STRING_FORMATTING))
             );
         }
 
         @Override
-        public void visitByte(NbtByte element) {
-            text.append(Text.literal(String.valueOf(element.byteValue()))
-                    .styled(style -> style.withFormatting(NUMBER_FORMATTING))
-                    .append(Text.literal("b")
-                            .styled(style -> style.withFormatting(TYPE_SUFFIX_FORMATTING))
+        public void visitByte(ByteTag element) {
+            text.append(Component.literal(String.valueOf(element.byteValue()))
+                    .withStyle(style -> style.applyFormat(NUMBER_FORMATTING))
+                    .append(Component.literal("b")
+                            .withStyle(style -> style.applyFormat(TYPE_SUFFIX_FORMATTING))
                     ));
         }
 
         @Override
-        public void visitShort(NbtShort element) {
-            text.append(Text.literal(String.valueOf(element.shortValue()))
-                    .styled(style -> style.withFormatting(NUMBER_FORMATTING))
-                    .append(Text.literal("s")
-                            .styled(style -> style.withFormatting(TYPE_SUFFIX_FORMATTING))
+        public void visitShort(ShortTag element) {
+            text.append(Component.literal(String.valueOf(element.shortValue()))
+                    .withStyle(style -> style.applyFormat(NUMBER_FORMATTING))
+                    .append(Component.literal("s")
+                            .withStyle(style -> style.applyFormat(TYPE_SUFFIX_FORMATTING))
                     ));
         }
 
         @Override
-        public void visitInt(NbtInt element) {
-            text.append(Text.literal(String.valueOf(element.intValue()))
-                    .styled(style -> style.withFormatting(NUMBER_FORMATTING))
+        public void visitInt(IntTag element) {
+            text.append(Component.literal(String.valueOf(element.intValue()))
+                    .withStyle(style -> style.applyFormat(NUMBER_FORMATTING))
             );
         }
 
         @Override
-        public void visitLong(NbtLong element) {
-            text.append(Text.literal(String.valueOf(element.longValue()))
-                    .styled(style -> style.withFormatting(NUMBER_FORMATTING))
-                    .append(Text.literal("l")
-                            .styled(style -> style.withFormatting(TYPE_SUFFIX_FORMATTING))
+        public void visitLong(LongTag element) {
+            text.append(Component.literal(String.valueOf(element.longValue()))
+                    .withStyle(style -> style.applyFormat(NUMBER_FORMATTING))
+                    .append(Component.literal("l")
+                            .withStyle(style -> style.applyFormat(TYPE_SUFFIX_FORMATTING))
                     ));
         }
 
         @Override
-        public void visitFloat(NbtFloat element) {
-            text.append(Text.literal(String.format("%.2f", element.floatValue()))
-                    .styled(style -> style.withFormatting(NUMBER_FORMATTING))
-                    .append(Text.literal("f")
-                            .styled(style -> style.withFormatting(TYPE_SUFFIX_FORMATTING))
+        public void visitFloat(FloatTag element) {
+            text.append(Component.literal(String.format("%.2f", element.floatValue()))
+                    .withStyle(style -> style.applyFormat(NUMBER_FORMATTING))
+                    .append(Component.literal("f")
+                            .withStyle(style -> style.applyFormat(TYPE_SUFFIX_FORMATTING))
                     ));
         }
 
         @Override
-        public void visitDouble(NbtDouble element) {
-            text.append(Text.literal(String.format("%.2f", element.doubleValue()))
-                    .styled(style -> style.withFormatting(NUMBER_FORMATTING))
-                    .append(Text.literal("d")
-                            .styled(style -> style.withFormatting(TYPE_SUFFIX_FORMATTING))
+        public void visitDouble(DoubleTag element) {
+            text.append(Component.literal(String.format("%.2f", element.doubleValue()))
+                    .withStyle(style -> style.applyFormat(NUMBER_FORMATTING))
+                    .append(Component.literal("d")
+                            .withStyle(style -> style.applyFormat(TYPE_SUFFIX_FORMATTING))
                     ));
         }
 
         @Override
-        public void visitByteArray(NbtByteArray element) {
+        public void visitByteArray(ByteArrayTag element) {
             visitAbstractList(element, "B");
         }
 
         @Override
-        public void visitIntArray(NbtIntArray element) {
+        public void visitIntArray(IntArrayTag element) {
             visitAbstractList(element, "I");
         }
 
         @Override
-        public void visitLongArray(NbtLongArray element) {
+        public void visitLongArray(LongArrayTag element) {
             visitAbstractList(element, "L");
         }
 
         @Override
-        public void visitList(NbtList element) {
+        public void visitList(ListTag element) {
             visitAbstractList(element, null);
         }
 
-        private void visitAbstractList(AbstractNbtList element, @Nullable String typePrefix) {
-            text.append(Text.literal("["));
+        private void visitAbstractList(CollectionTag element, @Nullable String typePrefix) {
+            text.append(Component.literal("["));
             if(typePrefix != null) {
-                text.append(Text.literal(typePrefix)
-                        .styled(style -> style.withFormatting(TYPE_SUFFIX_FORMATTING))
-                ).append(Text.literal("; "));
+                text.append(Component.literal(typePrefix)
+                        .withStyle(style -> style.applyFormat(TYPE_SUFFIX_FORMATTING))
+                ).append(Component.literal("; "));
             }
             for(int i = 0; i < element.size(); i++) {
                 if(entriesLeft <= 0) {
-                    text.append(Text.literal("...]"));
+                    text.append(Component.literal("...]"));
                     return;
                 }
-                element.method_10534(i).accept(this);
+                element.get(i).accept(this);
                 entriesLeft--;
                 if (i < element.size() - 1) {
-                    text.append(Text.literal(", "));
+                    text.append(Component.literal(", "));
                 }
             }
-            text.append(Text.literal("]"));
+            text.append(Component.literal("]"));
         }
 
         @Override
-        public void visitCompound(NbtCompound compound) {
-            text.append(Text.literal("{"));
+        public void visitCompound(CompoundTag compound) {
+            text.append(Component.literal("{"));
             int i = 0;
-            var keys = compound.getKeys().stream().sorted().iterator();
+            var keys = compound.keySet().stream().sorted().iterator();
             while(keys.hasNext()) {
                 var key = keys.next();
                 if(entriesLeft <= 0) {
-                    text.append(Text.literal("...}"));
+                    text.append(Component.literal("...}"));
                     return;
                 }
-                text.append(getTagText(key).append(Text.of(": ")));
+                text.append(getTagText(key).append(Component.nullToEmpty(": ")));
                 Objects.requireNonNull(compound.get(key)).accept(this);
                 entriesLeft--;
-                if (i++ < compound.getKeys().size() - 1) {
-                    text.append(Text.literal(", "));
+                if (i++ < compound.keySet().size() - 1) {
+                    text.append(Component.literal(", "));
                 }
             }
-            text.append(Text.literal("}"));
+            text.append(Component.literal("}"));
         }
 
         @Override
-        public void visitEnd(NbtEnd element) { }
+        public void visitEnd(EndTag element) { }
     }
 
-    private static class TopLevelNbtVisitor implements NbtElementVisitor {
+    private static class TopLevelNbtVisitor implements TagVisitor {
 
         public final int[] visitorEntryCount;
         public List<List<Entry>> entries;
@@ -284,7 +299,7 @@ public class SidebarNbtRenderable implements SidebarRenderable {
         }
 
         @Override
-        public void visitString(NbtString element) {
+        public void visitString(StringTag element) {
             var allowedEntries = getNextEntryCount();
             if(allowedEntries == 0) return;
             var nestedVisitor = new NestedNbtVisitor();
@@ -293,7 +308,7 @@ public class SidebarNbtRenderable implements SidebarRenderable {
         }
 
         @Override
-        public void visitByte(NbtByte element) {
+        public void visitByte(ByteTag element) {
             var allowedEntries = getNextEntryCount();
             if(allowedEntries == 0) return;
             var nestedVisitor = new NestedNbtVisitor();
@@ -302,7 +317,7 @@ public class SidebarNbtRenderable implements SidebarRenderable {
         }
 
         @Override
-        public void visitShort(NbtShort element) {
+        public void visitShort(ShortTag element) {
             var allowedEntries = getNextEntryCount();
             if(allowedEntries == 0) return;
             var nestedVisitor = new NestedNbtVisitor();
@@ -311,7 +326,7 @@ public class SidebarNbtRenderable implements SidebarRenderable {
         }
 
         @Override
-        public void visitInt(NbtInt element) {
+        public void visitInt(IntTag element) {
             var allowedEntries = getNextEntryCount();
             if(allowedEntries == 0) return;
             var nestedVisitor = new NestedNbtVisitor();
@@ -320,7 +335,7 @@ public class SidebarNbtRenderable implements SidebarRenderable {
         }
 
         @Override
-        public void visitLong(NbtLong element) {
+        public void visitLong(LongTag element) {
             var allowedEntries = getNextEntryCount();
             if(allowedEntries == 0) return;
             var nestedVisitor = new NestedNbtVisitor();
@@ -329,7 +344,7 @@ public class SidebarNbtRenderable implements SidebarRenderable {
         }
 
         @Override
-        public void visitFloat(NbtFloat element) {
+        public void visitFloat(FloatTag element) {
             var allowedEntries = getNextEntryCount();
             if(allowedEntries == 0) return;
             var nestedVisitor = new NestedNbtVisitor();
@@ -338,7 +353,7 @@ public class SidebarNbtRenderable implements SidebarRenderable {
         }
 
         @Override
-        public void visitDouble(NbtDouble element) {
+        public void visitDouble(DoubleTag element) {
             var allowedEntries = getNextEntryCount();
             if(allowedEntries == 0) return;
             var nestedVisitor = new NestedNbtVisitor();
@@ -347,40 +362,40 @@ public class SidebarNbtRenderable implements SidebarRenderable {
         }
 
         @Override
-        public void visitByteArray(NbtByteArray element) {
+        public void visitByteArray(ByteArrayTag element) {
             visitAbstractList(element);
         }
 
         @Override
-        public void visitIntArray(NbtIntArray element) {
+        public void visitIntArray(IntArrayTag element) {
             visitAbstractList(element);
         }
 
         @Override
-        public void visitLongArray(NbtLongArray element) {
+        public void visitLongArray(LongArrayTag element) {
             visitAbstractList(element);
         }
 
         @Override
-        public void visitList(NbtList element) {
+        public void visitList(ListTag element) {
             visitAbstractList(element);
         }
 
-        private void visitAbstractList(AbstractNbtList element) {
+        private void visitAbstractList(CollectionTag element) {
             var arrayEntries = new ArrayList<Entry>();
             var endIndex = Math.min(element.size(), getNextEntryCount());
             for(int i = 0; i < endIndex; i++) {
                 var nestedVisitor = new NestedNbtVisitor();
-                element.method_10534(i).accept(nestedVisitor);
+                element.get(i).accept(nestedVisitor);
                 arrayEntries.add(new Entry(getIndexText(i), nestedVisitor.text));
             }
             entries.add(arrayEntries);
         }
 
         @Override
-        public void visitCompound(NbtCompound compound) {
+        public void visitCompound(CompoundTag compound) {
             var arrayEntries = new ArrayList<Entry>();
-            compound.getKeys().stream().sorted().limit(getNextEntryCount()).forEach(key -> {
+            compound.keySet().stream().sorted().limit(getNextEntryCount()).forEach(key -> {
                 var nestedVisitor = new NestedNbtVisitor();
                 Objects.requireNonNull(compound.get(key)).accept(nestedVisitor);
                 arrayEntries.add(new Entry(getTagText(key), nestedVisitor.text));
@@ -389,12 +404,12 @@ public class SidebarNbtRenderable implements SidebarRenderable {
         }
 
         @Override
-        public void visitEnd(NbtEnd element) { }
+        public void visitEnd(EndTag element) { }
 
         private int getNextEntryCount() {
             return visitorEntryCount[currentVisitorIndex++];
         }
 
-        private record Entry(@Nullable Text key, Text value) { }
+        private record Entry(@Nullable Component key, Component value) { }
     }
 }

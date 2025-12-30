@@ -2,12 +2,12 @@ package net.papierkorb2292.multiscoreboard.mixin;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.network.packet.s2c.play.ScoreboardDisplayS2CPacket;
-import net.minecraft.scoreboard.ScoreboardDisplaySlot;
-import net.minecraft.scoreboard.ScoreboardObjective;
-import net.minecraft.scoreboard.ServerScoreboard;
-import net.minecraft.server.PlayerManager;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.network.protocol.game.ClientboundSetDisplayObjectivePacket;
+import net.minecraft.world.scores.DisplaySlot;
+import net.minecraft.world.scores.Objective;
+import net.minecraft.server.ServerScoreboard;
+import net.minecraft.server.players.PlayerList;
+import net.minecraft.server.level.ServerPlayer;
 import net.papierkorb2292.multiscoreboard.MultiScoreboardSidebarInterface;
 import net.papierkorb2292.multiscoreboard.ToggleSingleScoreSidebarS2CPacket;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,27 +17,27 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Set;
 
-@Mixin(PlayerManager.class)
-public class PlayerManagerMixin {
+@Mixin(PlayerList.class)
+public class PlayerListMixin {
 
     @Inject(
-            method = "sendScoreboard",
+            method = "updateEntireScoreboard",
             at = @At("HEAD")
     )
-    private void multiScoreboard$resetClientSidebarObjectives(ServerScoreboard scoreboard, ServerPlayerEntity player, CallbackInfo ci) {
-        player.networkHandler.sendPacket(new ScoreboardDisplayS2CPacket(ScoreboardDisplaySlot.SIDEBAR, null));
+    private void multiScoreboard$resetClientSidebarObjectives(ServerScoreboard scoreboard, ServerPlayer player, CallbackInfo ci) {
+        player.connection.send(new ClientboundSetDisplayObjectivePacket(DisplaySlot.SIDEBAR, null));
     }
 
     @Inject(
-            method = "sendScoreboard",
+            method = "updateEntireScoreboard",
             at = @At("TAIL")
     )
-    private void multiScoreboard$sendSidebarObjectives(ServerScoreboard scoreboard, ServerPlayerEntity player, CallbackInfo ci, @Local Set<ScoreboardObjective> sentObjectives) {
+    private void multiScoreboard$sendSidebarObjectives(ServerScoreboard scoreboard, ServerPlayer player, CallbackInfo ci, @Local Set<Objective> sentObjectives) {
         var sidebarObjectives = ((MultiScoreboardSidebarInterface)scoreboard).multiScoreboard$getSidebarObjectives();
         for(var objective : sidebarObjectives) {
             if(!sentObjectives.contains(objective)) {
-                for(var packet : scoreboard.createChangePackets(objective)) {
-                    player.networkHandler.sendPacket(packet);
+                for(var packet : scoreboard.getStartTrackingPackets(objective)) {
+                    player.connection.send(packet);
                 }
                 sentObjectives.add(objective);
             }
@@ -47,8 +47,8 @@ public class PlayerManagerMixin {
         for(var entry : singleScoreSidebars.entrySet()) {
             var objective = entry.getKey();
             if(!sentObjectives.contains(objective)) {
-                for(var packet : scoreboard.createChangePackets(objective)) {
-                    player.networkHandler.sendPacket(packet);
+                for(var packet : scoreboard.getStartTrackingPackets(objective)) {
+                    player.connection.send(packet);
                 }
                 sentObjectives.add(objective);
             }

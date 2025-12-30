@@ -1,28 +1,27 @@
 package net.papierkorb2292.multiscoreboard.client;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.hud.InGameHud;
-import net.minecraft.scoreboard.ScoreHolder;
-import net.minecraft.scoreboard.ScoreboardObjective;
-import net.minecraft.scoreboard.Team;
-import net.minecraft.scoreboard.number.StyledNumberFormat;
-import net.minecraft.text.Text;
-import net.minecraft.util.Colors;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.numbers.StyledFormat;
+import net.minecraft.util.CommonColors;
+import net.minecraft.world.scores.Objective;
+import net.minecraft.world.scores.PlayerTeam;
+import net.minecraft.world.scores.ScoreHolder;
 import net.papierkorb2292.multiscoreboard.MultiScoreboardSidebarInterface;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 public class SidebarSingleScoresRenderable implements SidebarRenderable {
 
     private static final int SCORE_GAP = 2;
-    private final ScoreboardObjective objective;
+    private final Objective objective;
 
-    public SidebarSingleScoresRenderable(ScoreboardObjective objective) {
+    public SidebarSingleScoresRenderable(Objective objective) {
         this.objective = objective;
     }
 
@@ -32,35 +31,35 @@ public class SidebarSingleScoresRenderable implements SidebarRenderable {
     }
 
     @Override
-    public void render(DrawContext context, InGameHud inGameHud) {
-        var textRenderer = MinecraftClient.getInstance().textRenderer;
+    public void render(GuiGraphics context, Gui inGameHud) {
+        var textRenderer = Minecraft.getInstance().font;
         var title = objective.getDisplayName();
         var entries = buildEntries();
-        int titleWidth = textRenderer.getWidth(title);
+        int titleWidth = textRenderer.width(title);
         int maxWidth = Math.max(titleWidth, getMaxEntryWidth(entries));
-        int titleLowerY = context.getScaledWindowHeight() / 2;
+        int titleLowerY = context.guiHeight() / 2;
         int border = 3;
-        int leftX = context.getScaledWindowWidth() - maxWidth - border;
-        int rightX = context.getScaledWindowWidth() - border + 2;
-        int titleBackgroundColor = MinecraftClient.getInstance().options.getTextBackgroundColor(0.4f);
-        context.fill(leftX - 2, titleLowerY - textRenderer.fontHeight - 1, rightX, titleLowerY, titleBackgroundColor);
-        context.drawText(textRenderer, title, leftX + maxWidth / 2 - titleWidth / 2, titleLowerY - textRenderer.fontHeight, Colors.WHITE, false);
+        int leftX = context.guiWidth() - maxWidth - border;
+        int rightX = context.guiWidth() - border + 2;
+        int titleBackgroundColor = Minecraft.getInstance().options.getBackgroundColor(0.4f);
+        context.fill(leftX - 2, titleLowerY - textRenderer.lineHeight - 1, rightX, titleLowerY, titleBackgroundColor);
+        context.drawString(textRenderer, title, leftX + maxWidth / 2 - titleWidth / 2, titleLowerY - textRenderer.lineHeight, CommonColors.WHITE, false);
         renderEntries(context, entries, maxWidth);
     }
 
-    public void renderEntries(DrawContext context, List<Entry> entries, int maxWidth) {
-        var textRenderer = MinecraftClient.getInstance().textRenderer;
-        int upperY = MinecraftClient.getInstance().getWindow().getScaledHeight() / 2;
+    public void renderEntries(GuiGraphics context, List<Entry> entries, int maxWidth) {
+        var textRenderer = Minecraft.getInstance().font;
+        int upperY = Minecraft.getInstance().getWindow().getGuiScaledHeight() / 2;
         int border = 3;
-        int leftX = MinecraftClient.getInstance().getWindow().getScaledWidth() - maxWidth - border;
-        int rightX = MinecraftClient.getInstance().getWindow().getScaledWidth() - border + 2;
-        int entryBackgroundColor = MinecraftClient.getInstance().options.getTextBackgroundColor(0.3f);
+        int leftX = Minecraft.getInstance().getWindow().getGuiScaledWidth() - maxWidth - border;
+        int rightX = Minecraft.getInstance().getWindow().getGuiScaledWidth() - border + 2;
+        int entryBackgroundColor = Minecraft.getInstance().options.getBackgroundColor(0.3f);
         for(int i = 0; i < entries.size(); i++) {
             var entry = entries.get(i);
-            var entryUpperY = upperY + i * MinecraftClient.getInstance().textRenderer.fontHeight + (i + 1) * SCORE_GAP;
-            context.fill(leftX - 2, entryUpperY - 1, rightX, entryUpperY + MinecraftClient.getInstance().textRenderer.fontHeight, entryBackgroundColor);
-            context.drawText(textRenderer, entry.name, leftX, entryUpperY, Colors.WHITE, false);
-            context.drawText(textRenderer, entry.value, rightX - textRenderer.getWidth(entry.value), entryUpperY, Colors.WHITE, false);
+            var entryUpperY = upperY + i * Minecraft.getInstance().font.lineHeight + (i + 1) * SCORE_GAP;
+            context.fill(leftX - 2, entryUpperY - 1, rightX, entryUpperY + Minecraft.getInstance().font.lineHeight, entryBackgroundColor);
+            context.drawString(textRenderer, entry.name, leftX, entryUpperY, CommonColors.WHITE, false);
+            context.drawString(textRenderer, entry.value, rightX - textRenderer.width(entry.value), entryUpperY, CommonColors.WHITE, false);
         }
     }
 
@@ -68,32 +67,32 @@ public class SidebarSingleScoresRenderable implements SidebarRenderable {
         var scoreNames = getSingleScores();
         if(scoreNames == null) return List.of();
         return scoreNames.stream().map(name -> {
-            Team team = objective.getScoreboard().getScoreHolderTeam(name);
-            Text nameText = Team.decorateName(team, Text.literal(name));
-            var score = objective.getScoreboard().getScore(ScoreHolder.fromName(name), objective);
+            PlayerTeam team = objective.getScoreboard().getPlayersTeam(name);
+            Component nameText = PlayerTeam.formatNameForTeam(team, Component.literal(name));
+            var score = objective.getScoreboard().getPlayerScoreInfo(ScoreHolder.forNameOnly(name), objective);
             if(score == null)
                 return new Entry(nameText, MultiScoreboardClient.NO_DATA_TEXT);
-            var scoreValue = score.getScore();
-            return new Entry(nameText, StyledNumberFormat.RED.format(scoreValue));
+            var scoreValue = score.value();
+            return new Entry(nameText, StyledFormat.SIDEBAR_DEFAULT.format(scoreValue));
         }).sorted(Comparator.comparing(entry -> entry.name.getString())).toList();
     }
 
     public int getMaxEntryWidth(List<Entry> entries) {
-        int entryGap = MinecraftClient.getInstance().textRenderer.getWidth(": ");
+        int entryGap = Minecraft.getInstance().font.width(": ");
         return entries.stream()
-                .mapToInt(entry -> MinecraftClient.getInstance().textRenderer.getWidth(entry.name) + MinecraftClient.getInstance().textRenderer.getWidth(entry.value) + entryGap)
+                .mapToInt(entry -> Minecraft.getInstance().font.width(entry.name) + Minecraft.getInstance().font.width(entry.value) + entryGap)
                 .max()
                 .orElse(0);
     }
 
     @Override
     public int calculateHeight() {
-        return getEntriesHeight() + MinecraftClient.getInstance().textRenderer.fontHeight;
+        return getEntriesHeight() + Minecraft.getInstance().font.lineHeight;
     }
 
     public int getEntriesHeight() {
         var singleScores = getSingleScores();
-        return singleScores == null ? 0 : (MinecraftClient.getInstance().textRenderer.fontHeight + SCORE_GAP) * singleScores.size();
+        return singleScores == null ? 0 : (Minecraft.getInstance().font.lineHeight + SCORE_GAP) * singleScores.size();
     }
 
     @Nullable
@@ -101,5 +100,5 @@ public class SidebarSingleScoresRenderable implements SidebarRenderable {
         return ((MultiScoreboardSidebarInterface)objective.getScoreboard()).multiScoreboard$getSingleScoreSidebars().get(objective);
     }
 
-    public record Entry(Text name, Text value) { }
+    public record Entry(Component name, Component value) { }
 }

@@ -1,28 +1,28 @@
 package net.papierkorb2292.multiscoreboard;
 
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public record SetNbtSidebarS2CPacket(String nbtSidebarName, List<NbtElement> nbt) implements CustomPayload {
-    public static final Id<SetNbtSidebarS2CPacket> ID = new CustomPayload.Id<>(Identifier.of(MultiScoreboard.MOD_ID, "set_nbt_sidebar"));
-    public static final Type<? super RegistryByteBuf, SetNbtSidebarS2CPacket> TYPE = PayloadTypeRegistry.playS2C().register(ID, PacketCodec.tuple(
-            PacketCodecs.STRING,
+public record SetNbtSidebarS2CPacket(String nbtSidebarName, List<Tag> nbt) implements CustomPacketPayload {
+    public static final Type<SetNbtSidebarS2CPacket> ID = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(MultiScoreboard.MOD_ID, "set_nbt_sidebar"));
+    public static final TypeAndCodec<? super RegistryFriendlyByteBuf, SetNbtSidebarS2CPacket> TYPE = PayloadTypeRegistry.playS2C().register(ID, StreamCodec.composite(
+            ByteBufCodecs.STRING_UTF8,
             SetNbtSidebarS2CPacket::nbtSidebarName,
-            PacketCodecs.collection(ArrayList::new, PacketCodecs.NBT_ELEMENT),
+            ByteBufCodecs.collection(ArrayList::new, ByteBufCodecs.TAG),
             SetNbtSidebarS2CPacket::nbt,
             SetNbtSidebarS2CPacket::new
     ));
 
     @Override
-    public Id<SetNbtSidebarS2CPacket> getId() {
+    public Type<SetNbtSidebarS2CPacket> type() {
         return ID;
     }
 }

@@ -6,14 +6,13 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.command.BlockDataObject;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.DataCommandObject;
-import net.minecraft.command.argument.NbtPathArgumentType;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.command.DataCommand;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.Text;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.server.commands.data.DataAccessor;
+import net.minecraft.commands.arguments.NbtPathArgument;
+import net.minecraft.commands.Commands;
+import net.minecraft.server.commands.data.DataCommands;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
 import net.papierkorb2292.multiscoreboard.MultiScoreboard;
 import net.papierkorb2292.multiscoreboard.ServerNbtSidebarManager;
 import net.papierkorb2292.multiscoreboard.ServerNbtSidebarManagerContainer;
@@ -23,55 +22,55 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-@Mixin(DataCommand.class)
-public abstract class DataCommandMixin {
+@Mixin(DataCommands.class)
+public abstract class DataCommandsMixin {
 
     @SuppressWarnings("InvalidInjectorMethodSignature")
     @ModifyVariable(
             method = "register",
             at = @At("STORE")
     )
-    private static DataCommand.ObjectType multiScoreboard$registerNbtSidebarCommand(DataCommand.ObjectType type, @Local LiteralArgumentBuilder<ServerCommandSource> literalArgumentBuilder) {
+    private static DataCommands.DataProvider multiScoreboard$registerNbtSidebarCommand(DataCommands.DataProvider type, @Local LiteralArgumentBuilder<CommandSourceStack> literalArgumentBuilder) {
         literalArgumentBuilder.then(
-                CommandManager.literal("multiscoreboard")
-                        .then(type.addArgumentsToBuilder(
-                                CommandManager.literal("toggle"), builder ->
+                Commands.literal("multiscoreboard")
+                        .then(type.wrap(
+                                Commands.literal("toggle"), builder ->
                                         builder.executes(context -> multiScoreboard$executeDisplaySidebar(
                                                 context.getSource(),
-                                                type.getObject(context),
+                                                type.access(context),
                                                 ServerNbtSidebarManager.ROOT_PATH,
                                                 null
                                         ))
-                                                .then(CommandManager.argument("path", NbtPathArgumentType.nbtPath())
+                                                .then(Commands.argument("path", NbtPathArgument.nbtPath())
                                                         .executes(context -> multiScoreboard$executeDisplaySidebar(
                                                                 context.getSource(),
-                                                                type.getObject(context),
-                                                                NbtPathArgumentType.getNbtPath(context, "path"),
+                                                                type.access(context),
+                                                                NbtPathArgument.getPath(context, "path"),
                                                                 null
                                                         ))
                                                         .then(
-                                                                CommandManager.argument("name", StringArgumentType.string())
+                                                                Commands.argument("name", StringArgumentType.string())
                                                                         .executes(context -> multiScoreboard$executeDisplaySidebar(
                                                                                 context.getSource(),
-                                                                                type.getObject(context),
-                                                                                NbtPathArgumentType.getNbtPath(context, "path"),
+                                                                                type.access(context),
+                                                                                NbtPathArgument.getPath(context, "path"),
                                                                                 StringArgumentType.getString(context, "name")
                                                                         ))))))
-                        .then(type.addArgumentsToBuilder(
-                                CommandManager.literal("removeAll"), builder ->
+                        .then(type.wrap(
+                                Commands.literal("removeAll"), builder ->
                                         builder.executes(context -> multiScoreboard$removeDataObjectSidebar(
                                                 context.getSource(),
-                                                type.getObject(context)
+                                                type.access(context)
                                         )))
                                 .executes(context ->
                                         multiScoreboard$removeAllNbtSidebars(context.getSource())
                                 )
                         )
-                        .then(CommandManager.literal("remove")
-                                .then(CommandManager.argument("name", StringArgumentType.string())
-                                        .suggests((CommandContext<ServerCommandSource> context, SuggestionsBuilder builder) -> {
+                        .then(Commands.literal("remove")
+                                .then(Commands.argument("name", StringArgumentType.string())
+                                        .suggests((CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) -> {
                                             var nbtSidebarManager = ((ServerNbtSidebarManagerContainer)context.getSource().getServer()).multiScoreboard$getNbtSidebarManager();
-                                            return CommandSource.suggestMatching(nbtSidebarManager.getNames().stream().map(StringArgumentType::escapeIfRequired), builder);
+                                            return SharedSuggestionProvider.suggest(nbtSidebarManager.getNames().stream().map(StringArgumentType::escapeIfRequired), builder);
                                         })
                                         .executes(context -> multiScoreboard$removeNbtSidebarByName(
                                                 context.getSource(),
@@ -81,32 +80,32 @@ public abstract class DataCommandMixin {
     }
 
     @Unique
-    private static int multiScoreboard$executeDisplaySidebar(ServerCommandSource source, DataCommandObject dataObject, NbtPathArgumentType.NbtPath path, @Nullable String name) throws CommandSyntaxException {
+    private static int multiScoreboard$executeDisplaySidebar(CommandSourceStack source, DataAccessor dataObject, NbtPathArgument.NbtPath path, @Nullable String name) throws CommandSyntaxException {
         var nbtSidebarManager = ((ServerNbtSidebarManagerContainer)source.getServer()).multiScoreboard$getNbtSidebarManager();
         var existingName = nbtSidebarManager.getEntryNameIfMatches(name, dataObject, path);
         if(existingName != null) {
             nbtSidebarManager.removeEntry(existingName);
-            source.sendFeedback(() -> Text.translatable("multiscoreboard.commands.data.multiscoreboard.remove", existingName), false);
+            source.sendSuccess(() -> Component.translatable("multiscoreboard.commands.data.multiscoreboard.remove", existingName), false);
             return -1;
         }
         var newName = nbtSidebarManager.addEntry(name, dataObject, path);
-        source.sendFeedback(() -> Text.translatable("multiscoreboard.commands.data.multiscoreboard.add", newName), false);
+        source.sendSuccess(() -> Component.translatable("multiscoreboard.commands.data.multiscoreboard.add", newName), false);
         return 1;
     }
 
     @Unique
-    private static int multiScoreboard$removeDataObjectSidebar(ServerCommandSource source, DataCommandObject dataObject) {
+    private static int multiScoreboard$removeDataObjectSidebar(CommandSourceStack source, DataAccessor dataObject) {
         var nbtSidebarManager = ((ServerNbtSidebarManagerContainer)source.getServer()).multiScoreboard$getNbtSidebarManager();
         var removedCount = nbtSidebarManager.removeEntriesOfDataObject(dataObject);
-        source.sendFeedback(() -> {
-            Text dataObjectText = switch(dataObject) {
-                case BlockDataObjectAccessor block ->
-                        Text.translatable("multiscoreboard.commands.data.object.block", block.getPos().getX(), block.getPos().getY(), block.getPos().getZ());
-                case EntityDataObjectAccessor entity ->
-                        Text.translatable("multiscoreboard.commands.data.object.entity", entity.getEntity().getDisplayName());
-                case StorageDataObjectAccessor storage ->
-                        Text.translatable("multiscoreboard.commands.data.object.storage", storage.getId());
-                default -> Text.translatable("multiscoreboard.commands.data.object.unknown");
+        source.sendSuccess(() -> {
+            Component dataObjectText = switch(dataObject) {
+                case BlockDataAccessorAccessor block ->
+                        Component.translatable("multiscoreboard.commands.data.object.block", block.getPos().getX(), block.getPos().getY(), block.getPos().getZ());
+                case EntityDataAccessorAccessor entity ->
+                        Component.translatable("multiscoreboard.commands.data.object.entity", entity.getEntity().getDisplayName());
+                case StorageDataAccessorAccessor storage ->
+                        Component.translatable("multiscoreboard.commands.data.object.storage", storage.getId());
+                default -> Component.translatable("multiscoreboard.commands.data.object.unknown");
             };
             return MultiScoreboard.getTranslatableTextWithCount("multiscoreboard.commands.data.multiscoreboard.removedAll.dataObject", removedCount, dataObjectText);
         }, false);
@@ -114,22 +113,22 @@ public abstract class DataCommandMixin {
     }
 
     @Unique
-    private static int multiScoreboard$removeNbtSidebarByName(ServerCommandSource source, String name) {
+    private static int multiScoreboard$removeNbtSidebarByName(CommandSourceStack source, String name) {
         var nbtSidebarManager = ((ServerNbtSidebarManagerContainer)source.getServer()).multiScoreboard$getNbtSidebarManager();
         var success = nbtSidebarManager.removeEntry(name);
         if(!success) {
-            source.sendFeedback(() -> Text.translatable("multiscoreboard.commands.data.multiscoreboard.name_not_found", name), false);
+            source.sendSuccess(() -> Component.translatable("multiscoreboard.commands.data.multiscoreboard.name_not_found", name), false);
             return 0;
         }
-        source.sendFeedback(() -> Text.translatable("multiscoreboard.commands.data.multiscoreboard.remove", name), false);
+        source.sendSuccess(() -> Component.translatable("multiscoreboard.commands.data.multiscoreboard.remove", name), false);
         return 1;
     }
 
     @Unique
-    private static int multiScoreboard$removeAllNbtSidebars(ServerCommandSource source) {
+    private static int multiScoreboard$removeAllNbtSidebars(CommandSourceStack source) {
         var nbtSidebarManager = ((ServerNbtSidebarManagerContainer)source.getServer()).multiScoreboard$getNbtSidebarManager();
         var removedCount = nbtSidebarManager.removeAllEntries();
-        source.sendFeedback(() -> MultiScoreboard.getTranslatableTextWithCount("multiscoreboard.commands.data.multiscoreboard.removedAll", removedCount), false);
+        source.sendSuccess(() -> MultiScoreboard.getTranslatableTextWithCount("multiscoreboard.commands.data.multiscoreboard.removedAll", removedCount), false);
         return removedCount;
     }
 }

@@ -1,11 +1,11 @@
 package net.papierkorb2292.multiscoreboard.client;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.hud.InGameHud;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.Gui;
 
 public interface SidebarRenderable {
     String getSortName();
-    void render(DrawContext context, InGameHud inGameHud);
+    void render(GuiGraphics context, Gui inGameHud);
 
     int calculateHeight();
 }

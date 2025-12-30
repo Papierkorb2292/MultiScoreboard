@@ -1,10 +1,10 @@
 package net.papierkorb2292.multiscoreboard.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-import net.minecraft.scoreboard.ScoreboardState;
-import net.minecraft.scoreboard.ServerScoreboard;
+import net.minecraft.world.scores.ScoreboardSaveData;
+import net.minecraft.server.ServerScoreboard;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.PersistentStateManager;
+import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.papierkorb2292.multiscoreboard.CustomSidebarPacked;
 import net.papierkorb2292.multiscoreboard.ServerNbtSidebarManager;
 import net.papierkorb2292.multiscoreboard.ServerNbtSidebarManagerContainer;
@@ -34,23 +34,23 @@ public class MinecraftServerMixin implements ServerNbtSidebarManagerContainer  {
     }
 
     @ModifyExpressionValue(
-            method = "createWorlds",
+            method = "createLevels",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/server/world/ServerWorld;getPersistentStateManager()Lnet/minecraft/world/PersistentStateManager;"
+                    target = "Lnet/minecraft/server/level/ServerLevel;getDataStorage()Lnet/minecraft/world/level/storage/DimensionDataStorage;"
             )
     )
-    private PersistentStateManager multiScoreboard$initNbtSideManager(PersistentStateManager persistentStateManager) {
+    private DimensionDataStorage multiScoreboard$initNbtSideManager(DimensionDataStorage persistentStateManager) {
         //noinspection DataFlowIssue
-        multiScoreboard$nbtSidebarManager = persistentStateManager.getOrCreate(ServerNbtSidebarManager.getPersistentStateType((MinecraftServer)(Object)this));
+        multiScoreboard$nbtSidebarManager = persistentStateManager.computeIfAbsent(ServerNbtSidebarManager.getPersistentStateType((MinecraftServer)(Object)this));
         return persistentStateManager;
     }
 
     @Inject(
-            method = "tick",
+            method = "tickServer",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/server/MinecraftServer;tickWorlds(Ljava/util/function/BooleanSupplier;)V"
+                    target = "Lnet/minecraft/server/MinecraftServer;tickChildren(Ljava/util/function/BooleanSupplier;)V"
             )
     )
     private void multiScoreboard$tickNbtSidebarManager(BooleanSupplier shouldKeepTicking, CallbackInfo ci) {
@@ -59,15 +59,15 @@ public class MinecraftServerMixin implements ServerNbtSidebarManagerContainer  {
     }
 
     @ModifyArg(
-            method = "createWorlds",
+            method = "createLevels",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/command/DataCommandStorage;<init>(Lnet/minecraft/world/PersistentStateManager;)V"
+                    target = "Lnet/minecraft/world/level/storage/CommandStorage;<init>(Lnet/minecraft/world/level/storage/DimensionDataStorage;)V"
             )
     )
-    private PersistentStateManager multiScoreboard$readCustomSidebarPacked(PersistentStateManager persistentStateManager) {
+    private DimensionDataStorage multiScoreboard$readCustomSidebarPacked(DimensionDataStorage persistentStateManager) {
         ((CustomSidebarPacked.Container)scoreboard).multiScoreboard$setCustomSidebarPacked(
-                ((CustomSidebarPacked.Container)persistentStateManager.getOrCreate(ScoreboardState.TYPE)).multiScoreboard$getCustomSidebarPacked()
+                ((CustomSidebarPacked.Container)persistentStateManager.computeIfAbsent(ScoreboardSaveData.TYPE)).multiScoreboard$getCustomSidebarPacked()
         );
         return persistentStateManager;
     }

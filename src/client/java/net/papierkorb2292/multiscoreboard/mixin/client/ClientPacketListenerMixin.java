@@ -2,27 +2,27 @@ package net.papierkorb2292.multiscoreboard.mixin.client;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.scoreboard.ScoreboardDisplaySlot;
-import net.minecraft.scoreboard.ScoreboardObjective;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.world.scores.Scoreboard;
+import net.minecraft.world.scores.DisplaySlot;
+import net.minecraft.world.scores.Objective;
 import net.papierkorb2292.multiscoreboard.MultiScoreboardSidebarInterface;
 import net.papierkorb2292.multiscoreboard.client.MultiScoreboardClient;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-@Mixin(ClientPlayNetworkHandler.class)
-public class ClientPlayNetworkHandlerMixin {
+@Mixin(ClientPacketListener.class)
+public class ClientPacketListenerMixin {
 
     @WrapOperation(
-            method = "onScoreboardDisplay",
+            method = "handleSetDisplayObjective",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/scoreboard/Scoreboard;setObjectiveSlot(Lnet/minecraft/scoreboard/ScoreboardDisplaySlot;Lnet/minecraft/scoreboard/ScoreboardObjective;)V"
+                    target = "Lnet/minecraft/world/scores/Scoreboard;setDisplayObjective(Lnet/minecraft/world/scores/DisplaySlot;Lnet/minecraft/world/scores/Objective;)V"
             )
     )
-    private void multiScoreboard$toggleObjectiveInSidebar(Scoreboard scoreboard, ScoreboardDisplaySlot displaySlot, ScoreboardObjective objective, Operation<Void> op) {
-        if(displaySlot != ScoreboardDisplaySlot.SIDEBAR) {
+    private void multiScoreboard$toggleObjectiveInSidebar(Scoreboard scoreboard, DisplaySlot displaySlot, Objective objective, Operation<Void> op) {
+        if(displaySlot != DisplaySlot.SIDEBAR) {
             op.call(scoreboard, displaySlot, objective);
             return;
         }

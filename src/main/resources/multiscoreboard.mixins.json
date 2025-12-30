@@ -3,19 +3,19 @@
   "package": "net.papierkorb2292.multiscoreboard.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "BlockDataObjectAccessor",
+    "BlockDataAccessorAccessor",
     "BlockDataObjectTypeMixin",
-    "DataCommandMixin",
-    "EntityDataObjectAccessor",
+    "DataCommandsMixin",
+    "EntityDataAccessorAccessor",
     "MinecraftServerMixin",
     "PauseContextMixin",
-    "PlayerManagerMixin",
+    "PlayerListMixin",
     "ScoreboardCommandMixin",
     "ScoreboardMixin",
-    "ServerPlayNetworkHandlerMixin",
+    "ServerGamePacketListenerImplMixin",
     "ServerScoreboardMixin",
-    "StorageDataObjectAccessor",
-    "ScoreboardStateMixin"
+    "StorageDataAccessorAccessor",
+    "ScoreboardSaveDataMixin"
   ],
   "injectors": {
     "defaultRequire": 1

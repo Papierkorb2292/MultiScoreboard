@@ -1,9 +1,8 @@
 package net.papierkorb2292.multiscoreboard;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.util.dynamic.Codecs;
+import net.minecraft.util.ExtraCodecs;
 
 import java.util.*;
 
@@ -19,7 +18,7 @@ public record CustomSidebarPacked(
                     Codec.unboundedMap(Codec.STRING, Codec.STRING.listOf()).optionalFieldOf("SingleScoreSidebars", Map.of()).forGetter(CustomSidebarPacked::singleScoreSidebarObjectives)
             ).apply(instance, CustomSidebarPacked::new));
 
-    public static Codec<Optional<CustomSidebarPacked>> OPTIONAL_CODEC = Codecs.optional(CODEC);
+    public static Codec<Optional<CustomSidebarPacked>> OPTIONAL_CODEC = ExtraCodecs.optionalEmptyMap(CODEC);
 
     public interface Container {
         CustomSidebarPacked multiScoreboard$getCustomSidebarPacked();

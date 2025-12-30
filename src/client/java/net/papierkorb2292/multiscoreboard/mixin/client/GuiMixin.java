@@ -6,11 +6,11 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.hud.InGameHud;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.scoreboard.ScoreboardObjective;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.world.scores.Objective;
 import net.papierkorb2292.multiscoreboard.MultiScoreboardSidebarInterface;
 import net.papierkorb2292.multiscoreboard.client.MultiScoreboardClient;
 import net.papierkorb2292.multiscoreboard.client.SidebarObjectiveRenderable;
@@ -27,24 +27,24 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
 
-@Mixin(InGameHud.class)
-public abstract class InGameHudMixin {
+@Mixin(Gui.class)
+public abstract class GuiMixin {
 
-    @Shadow @Final private MinecraftClient client;
+    @Shadow @Final private Minecraft minecraft;
 
     @WrapOperation(
-            method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/client/render/RenderTickCounter;)V",
+            method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/DeltaTracker;)V",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/hud/InGameHud;renderScoreboardSidebar(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/scoreboard/ScoreboardObjective;)V"
+                    target = "Lnet/minecraft/client/gui/Gui;displayScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/world/scores/Objective;)V"
             )
     )
-    private void multiScoreboard$translateSidebarTeamObjective(InGameHud inGameHud, DrawContext context, ScoreboardObjective teamObjective, Operation<Void> op, @Share("sidebarHeights") LocalRef<Map<SidebarRenderable, Integer>> scoreboardHeightsRef) {
+    private void multiScoreboard$translateSidebarTeamObjective(Gui inGameHud, GuiGraphics context, Objective teamObjective, Operation<Void> op, @Share("sidebarHeights") LocalRef<Map<SidebarRenderable, Integer>> scoreboardHeightsRef) {
         if(!MultiScoreboardClient.useMultiScoreboard()) {
             op.call(inGameHud, context, teamObjective);
             return;
         }
-        var scoreboard = Objects.requireNonNull(client.world).getScoreboard();
+        var scoreboard = Objects.requireNonNull(minecraft.level).getScoreboard();
 
         var teamScoreboardHeight = new SidebarObjectiveRenderable(
                 teamObjective,
@@ -54,30 +54,30 @@ public abstract class InGameHudMixin {
         var totalRestHeight = calculatedHeights.getFirst();
         scoreboardHeightsRef.set(calculatedHeights.getSecond());
 
-        context.getMatrices().pushMatrix();
+        context.pose().pushMatrix();
         //noinspection IntegerDivisionInFloatingPointContext
-        context.getMatrices().translate(0, MinecraftClient.getInstance().textRenderer.fontHeight-(teamScoreboardHeight + totalRestHeight)/2 + MultiScoreboardClient.getSidebarScrollTranslation());
+        context.pose().translate(0, Minecraft.getInstance().font.lineHeight -(teamScoreboardHeight + totalRestHeight)/2 + MultiScoreboardClient.getSidebarScrollTranslation());
         op.call(inGameHud, context, teamObjective);
-        context.getMatrices().translate(0, teamScoreboardHeight);
+        context.pose().translate(0, teamScoreboardHeight);
     }
 
     @Inject(
-            method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/client/render/RenderTickCounter;)V",
+            method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/DeltaTracker;)V",
             at = @At("TAIL")
     )
-    private void multiScoreboard$renderSidebarObjectives(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci, @Local(ordinal = 1) ScoreboardObjective teamObjective, @Share("sidebarHeights") LocalRef<Map<SidebarRenderable, Integer>> sidebarHeightsRef) {
+    private void multiScoreboard$renderSidebarObjectives(GuiGraphics context, DeltaTracker tickCounter, CallbackInfo ci, @Local(ordinal = 1) Objective teamObjective, @Share("sidebarHeights") LocalRef<Map<SidebarRenderable, Integer>> sidebarHeightsRef) {
         if(!MultiScoreboardClient.useMultiScoreboard()) return;
         var noTeamScoreboard = sidebarHeightsRef.get() == null;
         var totalHeight = 0;
         if(noTeamScoreboard) {
-            var scoreboard = Objects.requireNonNull(client.world).getScoreboard();
+            var scoreboard = Objects.requireNonNull(minecraft.level).getScoreboard();
             var calculatedHeights = MultiScoreboardClient.calculateSidebarHeights(scoreboard, null);
             totalHeight = calculatedHeights.getFirst();
             sidebarHeightsRef.set(calculatedHeights.getSecond());
         }
         if(sidebarHeightsRef.get().isEmpty()) {
             if(!noTeamScoreboard)
-                context.getMatrices().popMatrix();
+                context.pose().popMatrix();
             return;
         }
 
@@ -86,37 +86,37 @@ public abstract class InGameHudMixin {
                 .iterator();
 
         if(noTeamScoreboard) {
-            context.getMatrices().pushMatrix();
+            context.pose().pushMatrix();
             //noinspection IntegerDivisionInFloatingPointContext
-            context.getMatrices().translate(0, MinecraftClient.getInstance().textRenderer.fontHeight-totalHeight/2);
-            context.getMatrices().translate(0, MultiScoreboardClient.getSidebarScrollTranslation());
+            context.pose().translate(0, Minecraft.getInstance().font.lineHeight -totalHeight/2);
+            context.pose().translate(0, MultiScoreboardClient.getSidebarScrollTranslation());
         }
         while(sorted.hasNext()) {
             var renderable = sorted.next();
-            renderable.getKey().render(context, (InGameHud)(Object)this);
-            context.getMatrices().translate(0, renderable.getValue() + MultiScoreboardClient.sidebarGap);
+            renderable.getKey().render(context, (Gui)(Object)this);
+            context.pose().translate(0, renderable.getValue() + MultiScoreboardClient.sidebarGap);
         }
 
-        context.getMatrices().popMatrix();
+        context.pose().popMatrix();
     }
 
     @ModifyExpressionValue(
-            method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/client/render/RenderTickCounter;)V",
+            method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/DeltaTracker;)V",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/scoreboard/Scoreboard;getObjectiveForSlot(Lnet/minecraft/scoreboard/ScoreboardDisplaySlot;)Lnet/minecraft/scoreboard/ScoreboardObjective;",
+                    target = "Lnet/minecraft/world/scores/Scoreboard;getDisplayObjective(Lnet/minecraft/world/scores/DisplaySlot;)Lnet/minecraft/world/scores/Objective;",
                     ordinal = 1
             )
     )
-    private ScoreboardObjective multiScoreboard$referGetSidebarObjectiveToMultiScoreboard(ScoreboardObjective original) {
+    private Objective multiScoreboard$referGetSidebarObjectiveToMultiScoreboard(Objective original) {
         return original != null || MultiScoreboardClient.useMultiScoreboard()
                 ? original
-                : ((MultiScoreboardSidebarInterface)Objects.requireNonNull(client.world).getScoreboard())
+                : ((MultiScoreboardSidebarInterface)Objects.requireNonNull(minecraft.level).getScoreboard())
                     .multiScoreboard$getSidebarObjectives().stream().findAny().orElse(null);
     }
 
     @ModifyExpressionValue(
-            method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/scoreboard/ScoreboardObjective;)V",
+            method = "displayScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/world/scores/Objective;)V",
             at = @At(
                     value = "CONSTANT",
                     args = "intValue=9",
@@ -128,7 +128,7 @@ public abstract class InGameHudMixin {
     }
 
     @ModifyVariable(
-            method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/scoreboard/ScoreboardObjective;)V",
+            method = "displayScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/world/scores/Objective;)V",
             at = @At("LOAD:LAST"),
             ordinal = 1
     )

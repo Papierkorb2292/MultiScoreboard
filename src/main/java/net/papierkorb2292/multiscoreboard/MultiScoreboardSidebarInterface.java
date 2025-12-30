@@ -1,14 +1,14 @@
 package net.papierkorb2292.multiscoreboard;
 
-import net.minecraft.scoreboard.ScoreboardObjective;
+import net.minecraft.world.scores.Objective;
 
 import java.util.Map;
 import java.util.Set;
 
 public interface MultiScoreboardSidebarInterface {
-    void multiScoreboard$removeObjectiveFromSidebar(ScoreboardObjective objective);
-    boolean multiScoreboard$toggleSingleScoreSidebar(ScoreboardObjective objective, String scoreHolder);
-    Set<ScoreboardObjective> multiScoreboard$getSidebarObjectives();
-    Map<ScoreboardObjective, Set<String>> multiScoreboard$getSingleScoreSidebars();
+    void multiScoreboard$removeObjectiveFromSidebar(Objective objective);
+    boolean multiScoreboard$toggleSingleScoreSidebar(Objective objective, String scoreHolder);
+    Set<Objective> multiScoreboard$getSidebarObjectives();
+    Map<Objective, Set<String>> multiScoreboard$getSingleScoreSidebars();
 
 }

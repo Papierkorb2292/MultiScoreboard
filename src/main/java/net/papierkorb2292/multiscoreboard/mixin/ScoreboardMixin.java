@@ -1,8 +1,8 @@
 package net.papierkorb2292.multiscoreboard.mixin;
 
-import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.scoreboard.ScoreboardDisplaySlot;
-import net.minecraft.scoreboard.ScoreboardObjective;
+import net.minecraft.world.scores.Scoreboard;
+import net.minecraft.world.scores.DisplaySlot;
+import net.minecraft.world.scores.Objective;
 import net.papierkorb2292.multiscoreboard.MultiScoreboardSidebarInterface;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,20 +18,20 @@ import java.util.*;
 public abstract class ScoreboardMixin implements MultiScoreboardSidebarInterface {
 
     @Shadow
-    public abstract @Nullable ScoreboardObjective getNullableObjective(@Nullable String name);
+    public abstract @Nullable Objective getObjective(@Nullable String name);
 
     @Unique
-    protected final Set<ScoreboardObjective> multiScoreboard$sidebarObjectives = new HashSet<>();
+    protected final Set<Objective> multiScoreboard$sidebarObjectives = new HashSet<>();
     @Unique
-    protected final Map<ScoreboardObjective, Set<String>> multiScoreboard$singleScoreSidebars = new HashMap<>();
+    protected final Map<Objective, Set<String>> multiScoreboard$singleScoreSidebars = new HashMap<>();
 
     @Override
-    public void multiScoreboard$removeObjectiveFromSidebar(ScoreboardObjective objective) {
+    public void multiScoreboard$removeObjectiveFromSidebar(Objective objective) {
         multiScoreboard$sidebarObjectives.remove(objective);
     }
 
     @Override
-    public boolean multiScoreboard$toggleSingleScoreSidebar(ScoreboardObjective objective, String scoreHolder) {
+    public boolean multiScoreboard$toggleSingleScoreSidebar(Objective objective, String scoreHolder) {
         var singleScoreSidebars = multiScoreboard$singleScoreSidebars.computeIfAbsent(objective, k -> new HashSet<>());
         if(singleScoreSidebars.contains(scoreHolder)) {
             singleScoreSidebars.remove(scoreHolder);
@@ -44,22 +44,22 @@ public abstract class ScoreboardMixin implements MultiScoreboardSidebarInterface
     }
 
     @Override
-    public Set<ScoreboardObjective> multiScoreboard$getSidebarObjectives() {
+    public Set<Objective> multiScoreboard$getSidebarObjectives() {
         return multiScoreboard$sidebarObjectives;
     }
 
     @Override
-    public Map<ScoreboardObjective, Set<String>> multiScoreboard$getSingleScoreSidebars() {
+    public Map<Objective, Set<String>> multiScoreboard$getSingleScoreSidebars() {
         return multiScoreboard$singleScoreSidebars;
     }
 
     @Inject(
-            method = "setObjectiveSlot",
+            method = "setDisplayObjective",
             at = @At("HEAD"),
             cancellable = true
     )
-    private void multiScoreboard$updateSidebarObjectives(ScoreboardDisplaySlot slot, ScoreboardObjective objective, CallbackInfo ci) {
-        if(slot == ScoreboardDisplaySlot.SIDEBAR) {
+    private void multiScoreboard$updateSidebarObjectives(DisplaySlot slot, Objective objective, CallbackInfo ci) {
+        if(slot == DisplaySlot.SIDEBAR) {
             if(objective == null) {
                 multiScoreboard$sidebarObjectives.clear();
                 return;
@@ -73,7 +73,7 @@ public abstract class ScoreboardMixin implements MultiScoreboardSidebarInterface
             method = "removeObjective",
             at = @At("HEAD")
     )
-    private void multiScoreboard$removeSidebarObjective(ScoreboardObjective objective, CallbackInfo ci) {
+    private void multiScoreboard$removeSidebarObjective(Objective objective, CallbackInfo ci) {
         multiScoreboard$sidebarObjectives.remove(objective);
         multiScoreboard$singleScoreSidebars.remove(objective);
     }

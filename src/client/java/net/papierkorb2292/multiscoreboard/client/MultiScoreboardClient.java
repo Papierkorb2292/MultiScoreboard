@@ -6,18 +6,18 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.scoreboard.ScoreboardDisplaySlot;
-import net.minecraft.scoreboard.ScoreboardObjective;
-import net.minecraft.scoreboard.Team;
-import net.minecraft.text.Text;
-import net.minecraft.util.Colors;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.KeyMapping;
+import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.scores.Scoreboard;
+import net.minecraft.world.scores.DisplaySlot;
+import net.minecraft.world.scores.Objective;
+import net.minecraft.world.scores.PlayerTeam;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.CommonColors;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import net.papierkorb2292.multiscoreboard.*;
 import org.lwjgl.glfw.GLFW;
 
@@ -26,16 +26,16 @@ import java.util.stream.Stream;
 
 public class MultiScoreboardClient implements ClientModInitializer {
     private static boolean useMultiScoreboard = false;
-    private static final Map<String, List<NbtElement>> nbtSidebars = new HashMap<>();
+    private static final Map<String, List<Tag>> nbtSidebars = new HashMap<>();
     private static int sidebarScrollTranslation = 0;
     private static final int scrollAmount = 10;
     private static final int maxTranslationBoundary = 10;
-    private static KeyBinding scrollUpKeyBinding;
-    private static KeyBinding scrollDownKeyBinding;
+    private static KeyMapping scrollUpKeyBinding;
+    private static KeyMapping scrollDownKeyBinding;
 
     public static final int sidebarGap = 11;
 
-    public static final Text NO_DATA_TEXT = Text.translatable("multiScoreboard.sidebarNbt.noData").styled(style -> style.withColor(Colors.RED));
+    public static final Component NO_DATA_TEXT = Component.translatable("multiScoreboard.sidebarNbt.noData").withStyle(style -> style.withColor(CommonColors.RED));
 
     @Override
     public void onInitializeClient() {
@@ -50,8 +50,8 @@ public class MultiScoreboardClient implements ClientModInitializer {
             clampScrollTranslation();
         });
         ClientPlayNetworking.registerGlobalReceiver(ToggleSingleScoreSidebarS2CPacket.ID, (packet, context) -> {
-            var scoreboard = context.player().getEntityWorld().getScoreboard();
-            var objective = scoreboard.getNullableObjective(packet.objective());
+            var scoreboard = context.player().level().getScoreboard();
+            var objective = scoreboard.getObjective(packet.objective());
             if(objective == null) return;
             ((MultiScoreboardSidebarInterface)scoreboard).multiScoreboard$toggleSingleScoreSidebar(objective, packet.score());
         });
@@ -60,33 +60,33 @@ public class MultiScoreboardClient implements ClientModInitializer {
             nbtSidebars.clear();
         });
 
-        final KeyBinding.Category keybindCategory = KeyBinding.Category.create(Identifier.of("multiscoreboard", "generic"));
-        scrollUpKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+        final KeyMapping.Category keybindCategory = KeyMapping.Category.register(Identifier.fromNamespaceAndPath("multiscoreboard", "generic"));
+        scrollUpKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.multiscoreboard.scroll_up",
-                InputUtil.Type.KEYSYM,
+                InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_UP,
                 keybindCategory
         ));
-        scrollDownKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+        scrollDownKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.multiscoreboard.scroll_down",
-                InputUtil.Type.KEYSYM,
+                InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_DOWN,
                 keybindCategory
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            var wasUpPressed = scrollUpKeyBinding.wasPressed();
-            var wasDownPressed = scrollDownKeyBinding.wasPressed();
-            var isUpPressed = scrollUpKeyBinding.isPressed();
-            var isDownPressed = scrollDownKeyBinding.isPressed();
+            var wasUpPressed = scrollUpKeyBinding.consumeClick();
+            var wasDownPressed = scrollDownKeyBinding.consumeClick();
+            var isUpPressed = scrollUpKeyBinding.isDown();
+            var isDownPressed = scrollDownKeyBinding.isDown();
             if(wasUpPressed == wasDownPressed && isUpPressed == isDownPressed) return;
 
-            var scoreboard = Objects.requireNonNull(client.world).getScoreboard();
-            Team team = scoreboard.getScoreHolderTeam(Objects.requireNonNull(MinecraftClient.getInstance().player).getNameForScoreboard());
-            ScoreboardDisplaySlot scoreboardDisplaySlot;
-            ScoreboardObjective teamObjective = null;
-            if (team != null && (scoreboardDisplaySlot = ScoreboardDisplaySlot.fromFormatting(team.getColor())) != null) {
-                teamObjective = scoreboard.getObjectiveForSlot(scoreboardDisplaySlot);
+            var scoreboard = Objects.requireNonNull(client.level).getScoreboard();
+            PlayerTeam team = scoreboard.getPlayersTeam(Objects.requireNonNull(Minecraft.getInstance().player).getScoreboardName());
+            DisplaySlot scoreboardDisplaySlot;
+            Objective teamObjective = null;
+            if (team != null && (scoreboardDisplaySlot = DisplaySlot.teamColorToSlot(team.getColor())) != null) {
+                teamObjective = scoreboard.getDisplayObjective(scoreboardDisplaySlot);
             }
             var calculatedHeights = calculateSidebarHeights(scoreboard, teamObjective);
             var totalHeight = calculatedHeights.getFirst();
@@ -94,12 +94,12 @@ public class MultiScoreboardClient implements ClientModInitializer {
             var sortedObjectives = scoreboardHeights.entrySet().stream()
                     .sorted(Comparator.comparing(renderable -> renderable.getKey().getSortName()))
                     .toList();
-            var maxTranslation = (totalHeight - client.getWindow().getScaledHeight())/2 + maxTranslationBoundary;
+            var maxTranslation = (totalHeight - client.getWindow().getGuiScaledHeight())/2 + maxTranslationBoundary;
             if(maxTranslation < 0) {
                 sidebarScrollTranslation = 0;
                 return;
             }
-            var shouldJumpScoreboard = InputUtil.isKeyPressed(client.getWindow(), GLFW.GLFW_KEY_LEFT_CONTROL);
+            var shouldJumpScoreboard = InputConstants.isKeyDown(client.getWindow(), GLFW.GLFW_KEY_LEFT_CONTROL);
             if(shouldJumpScoreboard) {
                 if(wasUpPressed) {
                     do {
@@ -112,7 +112,7 @@ public class MultiScoreboardClient implements ClientModInitializer {
                                 break;
                             }
                         }
-                    } while(scrollUpKeyBinding.wasPressed());
+                    } while(scrollUpKeyBinding.consumeClick());
                     return;
                 }
                 if(wasDownPressed) {
@@ -127,7 +127,7 @@ public class MultiScoreboardClient implements ClientModInitializer {
                                 break;
                             }
                         }
-                    } while(scrollDownKeyBinding.wasPressed());
+                    } while(scrollDownKeyBinding.consumeClick());
                     return;
                 }
                 return;
@@ -143,22 +143,22 @@ public class MultiScoreboardClient implements ClientModInitializer {
     }
 
     public static void clampScrollTranslation() {
-        var player = Objects.requireNonNull(MinecraftClient.getInstance().player);
-        var scoreboard = player.getEntityWorld().getScoreboard();
-        Team team = scoreboard.getScoreHolderTeam(player.getNameForScoreboard());
-        ScoreboardDisplaySlot scoreboardDisplaySlot;
-        ScoreboardObjective teamObjective = null;
-        if (team != null && (scoreboardDisplaySlot = ScoreboardDisplaySlot.fromFormatting(team.getColor())) != null) {
-            teamObjective = scoreboard.getObjectiveForSlot(scoreboardDisplaySlot);
+        var player = Objects.requireNonNull(Minecraft.getInstance().player);
+        var scoreboard = player.level().getScoreboard();
+        PlayerTeam team = scoreboard.getPlayersTeam(player.getScoreboardName());
+        DisplaySlot scoreboardDisplaySlot;
+        Objective teamObjective = null;
+        if (team != null && (scoreboardDisplaySlot = DisplaySlot.teamColorToSlot(team.getColor())) != null) {
+            teamObjective = scoreboard.getDisplayObjective(scoreboardDisplaySlot);
         }
         var calculatedHeights = calculateSidebarHeights(scoreboard, teamObjective);
         var totalHeight = calculatedHeights.getFirst();
-        var maxTranslation = (totalHeight - MinecraftClient.getInstance().getWindow().getScaledHeight())/2 + maxTranslationBoundary;
+        var maxTranslation = (totalHeight - Minecraft.getInstance().getWindow().getGuiScaledHeight())/2 + maxTranslationBoundary;
         if(maxTranslation < 0) {
             sidebarScrollTranslation = 0;
             return;
         }
-        sidebarScrollTranslation = MathHelper.clamp(sidebarScrollTranslation, -maxTranslation, maxTranslation);
+        sidebarScrollTranslation = Mth.clamp(sidebarScrollTranslation, -maxTranslation, maxTranslation);
     }
 
     public static boolean useMultiScoreboard() {
@@ -169,7 +169,7 @@ public class MultiScoreboardClient implements ClientModInitializer {
         return sidebarScrollTranslation;
     }
 
-    public static Pair<Integer, Map<SidebarRenderable, Integer>> calculateSidebarHeights(Scoreboard scoreboard, ScoreboardObjective teamObjective) {
+    public static Pair<Integer, Map<SidebarRenderable, Integer>> calculateSidebarHeights(Scoreboard scoreboard, Objective teamObjective) {
         var scoreboardHeights = new HashMap<SidebarRenderable, Integer>();
 
         var sidebarObjectives = ((MultiScoreboardSidebarInterface)scoreboard).multiScoreboard$getSidebarObjectives();
@@ -206,7 +206,7 @@ public class MultiScoreboardClient implements ClientModInitializer {
         return Pair.of(totalHeight, scoreboardHeights);
     }
 
-    public static Map<String, List<NbtElement>> getNbtSidebars() {
+    public static Map<String, List<Tag>> getNbtSidebars() {
         return nbtSidebars;
     }
 }

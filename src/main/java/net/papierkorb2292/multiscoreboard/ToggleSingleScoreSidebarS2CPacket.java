@@ -1,24 +1,24 @@
 package net.papierkorb2292.multiscoreboard;
 
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
 
-public record ToggleSingleScoreSidebarS2CPacket(String objective, String score) implements CustomPayload {
-    public static final Id<ToggleSingleScoreSidebarS2CPacket> ID = new Id<>(Identifier.of(MultiScoreboard.MOD_ID, "toggle_single_score_sidebar"));
-    public static final Type<? super RegistryByteBuf, ToggleSingleScoreSidebarS2CPacket> TYPE = PayloadTypeRegistry.playS2C().register(ID, PacketCodec.tuple(
-            PacketCodecs.STRING,
+public record ToggleSingleScoreSidebarS2CPacket(String objective, String score) implements CustomPacketPayload {
+    public static final Type<ToggleSingleScoreSidebarS2CPacket> ID = new Type<>(Identifier.fromNamespaceAndPath(MultiScoreboard.MOD_ID, "toggle_single_score_sidebar"));
+    public static final TypeAndCodec<? super RegistryFriendlyByteBuf, ToggleSingleScoreSidebarS2CPacket> TYPE = PayloadTypeRegistry.playS2C().register(ID, StreamCodec.composite(
+            ByteBufCodecs.STRING_UTF8,
             ToggleSingleScoreSidebarS2CPacket::objective,
-            PacketCodecs.STRING,
+            ByteBufCodecs.STRING_UTF8,
             ToggleSingleScoreSidebarS2CPacket::score,
             ToggleSingleScoreSidebarS2CPacket::new
     ));
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

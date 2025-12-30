@@ -2,7 +2,7 @@ package net.papierkorb2292.multiscoreboard;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,11 +30,11 @@ public class MultiScoreboard implements ModInitializer {
         });
     }
 
-    public static Text getTranslatableTextWithCount(String baseKey, int count, Object... args) {
+    public static Component getTranslatableTextWithCount(String baseKey, int count, Object... args) {
         if(count == 0)
-            return Text.translatable(baseKey + ".none", args);
+            return Component.translatable(baseKey + ".none", args);
         if(count == 1)
-            return Text.translatable(baseKey + ".single", args);
-        return Text.translatable(baseKey + ".count", ArrayUtils.addFirst(args, count));
+            return Component.translatable(baseKey + ".single", args);
+        return Component.translatable(baseKey + ".count", ArrayUtils.addFirst(args, count));
     }
 }
