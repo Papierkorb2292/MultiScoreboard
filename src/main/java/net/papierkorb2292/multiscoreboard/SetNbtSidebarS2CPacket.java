@@ -13,7 +13,7 @@ import java.util.List;
 
 public record SetNbtSidebarS2CPacket(String nbtSidebarName, List<Tag> nbt) implements CustomPacketPayload {
     public static final Type<SetNbtSidebarS2CPacket> ID = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(MultiScoreboard.MOD_ID, "set_nbt_sidebar"));
-    public static final TypeAndCodec<? super RegistryFriendlyByteBuf, SetNbtSidebarS2CPacket> TYPE = PayloadTypeRegistry.playS2C().register(ID, StreamCodec.composite(
+    public static final TypeAndCodec<? super RegistryFriendlyByteBuf, SetNbtSidebarS2CPacket> TYPE = PayloadTypeRegistry.clientboundPlay().register(ID, StreamCodec.composite(
             ByteBufCodecs.STRING_UTF8,
             SetNbtSidebarS2CPacket::nbtSidebarName,
             ByteBufCodecs.collection(ArrayList::new, ByteBufCodecs.TAG),

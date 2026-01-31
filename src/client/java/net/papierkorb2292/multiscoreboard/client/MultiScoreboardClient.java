@@ -3,7 +3,7 @@ package net.papierkorb2292.multiscoreboard.client;
 import com.mojang.datafixers.util.Pair;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
@@ -61,13 +61,13 @@ public class MultiScoreboardClient implements ClientModInitializer {
         });
 
         final KeyMapping.Category keybindCategory = KeyMapping.Category.register(Identifier.fromNamespaceAndPath("multiscoreboard", "generic"));
-        scrollUpKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        scrollUpKeyBinding = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.multiscoreboard.scroll_up",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_UP,
                 keybindCategory
         ));
-        scrollDownKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        scrollDownKeyBinding = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.multiscoreboard.scroll_down",
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_DOWN,
