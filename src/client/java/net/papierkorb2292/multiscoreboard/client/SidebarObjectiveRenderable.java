@@ -1,8 +1,8 @@
 package net.papierkorb2292.multiscoreboard.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.scores.Objective;
 import net.papierkorb2292.multiscoreboard.mixin.client.GuiAccessor;
 
@@ -30,7 +30,7 @@ public class SidebarObjectiveRenderable implements SidebarRenderable {
     }
 
     @Override
-    public void render(GuiGraphics context, Gui inGameHud) {
+    public void render(GuiGraphicsExtractor context, Gui inGameHud) {
         var singleScoresEntries = singleScoresRenderable.buildEntries();
         CURRENT_MAX_WIDTH.set(singleScoresRenderable.getMaxEntryWidth(singleScoresEntries));
         ((GuiAccessor)inGameHud).callDisplayScoreboardSidebar(context, objective);

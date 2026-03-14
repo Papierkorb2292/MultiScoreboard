@@ -1,10 +1,10 @@
 package net.papierkorb2292.multiscoreboard.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import net.minecraft.world.level.storage.SavedDataStorage;
 import net.minecraft.world.scores.ScoreboardSaveData;
 import net.minecraft.server.ServerScoreboard;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.papierkorb2292.multiscoreboard.CustomSidebarPacked;
 import net.papierkorb2292.multiscoreboard.ServerNbtSidebarManager;
 import net.papierkorb2292.multiscoreboard.ServerNbtSidebarManagerContainer;
@@ -25,6 +25,9 @@ public class MinecraftServerMixin implements ServerNbtSidebarManagerContainer  {
     @Shadow
     @Final
     private ServerScoreboard scoreboard;
+    @Shadow
+    @Final
+    private SavedDataStorage savedDataStorage;
     @Unique
     private ServerNbtSidebarManager multiScoreboard$nbtSidebarManager = null;
 
@@ -33,17 +36,14 @@ public class MinecraftServerMixin implements ServerNbtSidebarManagerContainer  {
         return multiScoreboard$nbtSidebarManager;
     }
 
-    @ModifyExpressionValue(
+    @Inject(
             method = "createLevels",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/server/level/ServerLevel;getDataStorage()Lnet/minecraft/world/level/storage/DimensionDataStorage;"
-            )
+            at = @At("HEAD")
     )
-    private DimensionDataStorage multiScoreboard$initNbtSideManager(DimensionDataStorage persistentStateManager) {
+    private SavedDataStorage multiScoreboard$initNbtSideManager(CallbackInfo ci) {
         //noinspection DataFlowIssue
-        multiScoreboard$nbtSidebarManager = persistentStateManager.computeIfAbsent(ServerNbtSidebarManager.getPersistentStateType((MinecraftServer)(Object)this));
-        return persistentStateManager;
+        multiScoreboard$nbtSidebarManager = savedDataStorage.computeIfAbsent(ServerNbtSidebarManager.getPersistentStateType((MinecraftServer)(Object)this));
+        return savedDataStorage;
     }
 
     @Inject(
@@ -62,10 +62,10 @@ public class MinecraftServerMixin implements ServerNbtSidebarManagerContainer  {
             method = "createLevels",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/storage/CommandStorage;<init>(Lnet/minecraft/world/level/storage/DimensionDataStorage;)V"
+                    target = "Lnet/minecraft/world/level/storage/CommandStorage;<init>(Lnet/minecraft/world/level/storage/SavedDataStorage;)V"
             )
     )
-    private DimensionDataStorage multiScoreboard$readCustomSidebarPacked(DimensionDataStorage persistentStateManager) {
+    private SavedDataStorage multiScoreboard$readCustomSidebarPacked(SavedDataStorage persistentStateManager) {
         ((CustomSidebarPacked.Container)scoreboard).multiScoreboard$setCustomSidebarPacked(
                 ((CustomSidebarPacked.Container)persistentStateManager.computeIfAbsent(ScoreboardSaveData.TYPE)).multiScoreboard$getCustomSidebarPacked()
         );

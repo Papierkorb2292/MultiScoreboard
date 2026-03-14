@@ -30,6 +30,7 @@ import net.papierkorb2292.multiscoreboard.mixin.BlockDataAccessorAccessor;
 import net.papierkorb2292.multiscoreboard.mixin.EntityDataAccessorAccessor;
 import net.papierkorb2292.multiscoreboard.mixin.StorageDataAccessorAccessor;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.*;
 
@@ -178,9 +179,9 @@ public class ServerNbtSidebarManager extends SavedData {
         }
     }
 
-    public static SavedDataType<ServerNbtSidebarManager> getPersistentStateType(MinecraftServer server) {
+    public static SavedDataType<@NonNull ServerNbtSidebarManager> getPersistentStateType(MinecraftServer server) {
         return new SavedDataType<>(
-                "multiscoreboard_nbt",
+                Identifier.fromNamespaceAndPath("multiscoreboard", "nbt"),
                 () -> new ServerNbtSidebarManager(server),
                 ENTRY_MAP_CODEC.fieldOf("entries").codec().xmap(entries -> new ServerNbtSidebarManager(server, entries), manager -> manager.entries),
                 null

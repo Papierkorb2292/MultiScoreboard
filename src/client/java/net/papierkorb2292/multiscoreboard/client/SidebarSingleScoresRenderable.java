@@ -2,7 +2,7 @@ package net.papierkorb2292.multiscoreboard.client;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.numbers.StyledFormat;
 import net.minecraft.util.CommonColors;
@@ -31,7 +31,7 @@ public class SidebarSingleScoresRenderable implements SidebarRenderable {
     }
 
     @Override
-    public void render(GuiGraphics context, Gui inGameHud) {
+    public void render(GuiGraphicsExtractor context, Gui inGameHud) {
         var textRenderer = Minecraft.getInstance().font;
         var title = objective.getDisplayName();
         var entries = buildEntries();
@@ -43,11 +43,11 @@ public class SidebarSingleScoresRenderable implements SidebarRenderable {
         int rightX = context.guiWidth() - border + 2;
         int titleBackgroundColor = Minecraft.getInstance().options.getBackgroundColor(0.4f);
         context.fill(leftX - 2, titleLowerY - textRenderer.lineHeight - 1, rightX, titleLowerY, titleBackgroundColor);
-        context.drawString(textRenderer, title, leftX + maxWidth / 2 - titleWidth / 2, titleLowerY - textRenderer.lineHeight, CommonColors.WHITE, false);
+        context.text(textRenderer, title, leftX + maxWidth / 2 - titleWidth / 2, titleLowerY - textRenderer.lineHeight, CommonColors.WHITE, false);
         renderEntries(context, entries, maxWidth);
     }
 
-    public void renderEntries(GuiGraphics context, List<Entry> entries, int maxWidth) {
+    public void renderEntries(GuiGraphicsExtractor context, List<Entry> entries, int maxWidth) {
         var textRenderer = Minecraft.getInstance().font;
         int upperY = Minecraft.getInstance().getWindow().getGuiScaledHeight() / 2;
         int border = 3;
@@ -58,8 +58,8 @@ public class SidebarSingleScoresRenderable implements SidebarRenderable {
             var entry = entries.get(i);
             var entryUpperY = upperY + i * Minecraft.getInstance().font.lineHeight + (i + 1) * SCORE_GAP;
             context.fill(leftX - 2, entryUpperY - 1, rightX, entryUpperY + Minecraft.getInstance().font.lineHeight, entryBackgroundColor);
-            context.drawString(textRenderer, entry.name, leftX, entryUpperY, CommonColors.WHITE, false);
-            context.drawString(textRenderer, entry.value, rightX - textRenderer.width(entry.value), entryUpperY, CommonColors.WHITE, false);
+            context.text(textRenderer, entry.name, leftX, entryUpperY, CommonColors.WHITE, false);
+            context.text(textRenderer, entry.value, rightX - textRenderer.width(entry.value), entryUpperY, CommonColors.WHITE, false);
         }
     }
 

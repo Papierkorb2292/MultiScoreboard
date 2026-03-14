@@ -22,7 +22,7 @@ public class ScoreboardSaveDataMixin extends SavedData implements CustomSidebarP
             method = "<clinit>",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/level/saveddata/SavedDataType;<init>(Ljava/lang/String;Ljava/util/function/Supplier;Lcom/mojang/serialization/Codec;Lnet/minecraft/util/datafix/DataFixTypes;)V"
+                    target = "Lnet/minecraft/world/level/saveddata/SavedDataType;<init>(Lnet/minecraft/resources/Identifier;Ljava/util/function/Supplier;Lcom/mojang/serialization/Codec;Lnet/minecraft/util/datafix/DataFixTypes;)V"
             )
     )
     private static Codec<ScoreboardSaveData> multiScoreboard$addCustomSidebarToCodec(Codec<ScoreboardSaveData> codec) {

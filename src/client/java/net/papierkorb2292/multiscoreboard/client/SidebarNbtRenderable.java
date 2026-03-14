@@ -1,8 +1,8 @@
 package net.papierkorb2292.multiscoreboard.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.nbt.*;
 import net.minecraft.nbt.ByteArrayTag;
 import net.minecraft.nbt.ByteTag;
@@ -54,7 +54,7 @@ public class SidebarNbtRenderable implements SidebarRenderable {
     }
 
     @Override
-    public void render(GuiGraphics context, Gui inGameHud) {
+    public void render(GuiGraphicsExtractor context, Gui inGameHud) {
         var textRenderer = Minecraft.getInstance().font;
         var title = Component.nullToEmpty(nbtSidebarName);
         var entries = new ArrayList<List<TopLevelNbtVisitor.Entry>>();
@@ -88,18 +88,18 @@ public class SidebarNbtRenderable implements SidebarRenderable {
         int titleLowerY = lowerY - entriesHeight;
         context.fill(leftX - 2, titleLowerY - textRenderer.lineHeight - 1, rightX, titleLowerY - 1, titleBackgroundColor);
         context.fill(leftX - 2, titleLowerY - 1, rightX, lowerY, entryBackgroundColor);
-        context.drawString(textRenderer, title, leftX + maxWidth / 2 - titleWidth / 2, titleLowerY - textRenderer.lineHeight, CommonColors.WHITE, false);
+        context.text(textRenderer, title, leftX + maxWidth / 2 - titleWidth / 2, titleLowerY - textRenderer.lineHeight, CommonColors.WHITE, false);
         var i = 0;
         for(var section : entries) {
             for(var entry : section) {
                 int entryY = lowerY - (entryCount - i++) * textRenderer.lineHeight;
                 var valueWidth = textRenderer.width(entry.value);
                 if(entry.key == null) {
-                    context.drawString(textRenderer, entry.value, leftX + maxWidth / 2 - valueWidth / 2, entryY, CommonColors.WHITE, false);
+                    context.text(textRenderer, entry.value, leftX + maxWidth / 2 - valueWidth / 2, entryY, CommonColors.WHITE, false);
                     continue;
                 }
-                context.drawString(textRenderer, entry.key, leftX, entryY, CommonColors.WHITE, false);
-                context.drawString(textRenderer, entry.value, leftX + maxWidth - valueWidth, entryY, CommonColors.WHITE, false);
+                context.text(textRenderer, entry.key, leftX, entryY, CommonColors.WHITE, false);
+                context.text(textRenderer, entry.value, leftX + maxWidth - valueWidth, entryY, CommonColors.WHITE, false);
             }
             if(i != entryCount) {
                 int separationY = lowerY - (entryCount - i) * textRenderer.lineHeight;

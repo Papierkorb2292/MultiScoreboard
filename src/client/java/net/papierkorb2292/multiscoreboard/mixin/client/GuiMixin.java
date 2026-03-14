@@ -7,9 +7,9 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.scores.Objective;
 import net.papierkorb2292.multiscoreboard.MultiScoreboardSidebarInterface;
 import net.papierkorb2292.multiscoreboard.client.MultiScoreboardClient;
@@ -33,13 +33,13 @@ public abstract class GuiMixin {
     @Shadow @Final private Minecraft minecraft;
 
     @WrapOperation(
-            method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/DeltaTracker;)V",
+            method = "extractScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/Gui;displayScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/world/scores/Objective;)V"
+                    target = "Lnet/minecraft/client/gui/Gui;displayScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/world/scores/Objective;)V"
             )
     )
-    private void multiScoreboard$translateSidebarTeamObjective(Gui inGameHud, GuiGraphics context, Objective teamObjective, Operation<Void> op, @Share("sidebarHeights") LocalRef<Map<SidebarRenderable, Integer>> scoreboardHeightsRef) {
+    private void multiScoreboard$translateSidebarTeamObjective(Gui inGameHud, GuiGraphicsExtractor context, Objective teamObjective, Operation<Void> op, @Share("sidebarHeights") LocalRef<Map<SidebarRenderable, Integer>> scoreboardHeightsRef) {
         if(!MultiScoreboardClient.useMultiScoreboard()) {
             op.call(inGameHud, context, teamObjective);
             return;
@@ -62,10 +62,10 @@ public abstract class GuiMixin {
     }
 
     @Inject(
-            method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/DeltaTracker;)V",
+            method = "extractScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V",
             at = @At("TAIL")
     )
-    private void multiScoreboard$renderSidebarObjectives(GuiGraphics context, DeltaTracker tickCounter, CallbackInfo ci, @Local(ordinal = 1) Objective teamObjective, @Share("sidebarHeights") LocalRef<Map<SidebarRenderable, Integer>> sidebarHeightsRef) {
+    private void multiScoreboard$renderSidebarObjectives(GuiGraphicsExtractor context, DeltaTracker tickCounter, CallbackInfo ci, @Local(ordinal = 1) Objective teamObjective, @Share("sidebarHeights") LocalRef<Map<SidebarRenderable, Integer>> sidebarHeightsRef) {
         if(!MultiScoreboardClient.useMultiScoreboard()) return;
         var noTeamScoreboard = sidebarHeightsRef.get() == null;
         var totalHeight = 0;
@@ -101,7 +101,7 @@ public abstract class GuiMixin {
     }
 
     @ModifyExpressionValue(
-            method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/DeltaTracker;)V",
+            method = "extractScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/scores/Scoreboard;getDisplayObjective(Lnet/minecraft/world/scores/DisplaySlot;)Lnet/minecraft/world/scores/Objective;",
@@ -116,7 +116,7 @@ public abstract class GuiMixin {
     }
 
     @ModifyExpressionValue(
-            method = "displayScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/world/scores/Objective;)V",
+            method = "displayScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/world/scores/Objective;)V",
             at = @At(
                     value = "CONSTANT",
                     args = "intValue=9",
@@ -128,7 +128,7 @@ public abstract class GuiMixin {
     }
 
     @ModifyVariable(
-            method = "displayScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/world/scores/Objective;)V",
+            method = "displayScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/world/scores/Objective;)V",
             at = @At("LOAD:LAST"),
             ordinal = 1
     )

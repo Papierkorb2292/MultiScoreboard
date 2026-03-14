@@ -6,16 +6,17 @@
     "BlockDataAccessorAccessor",
     "BlockDataObjectTypeMixin",
     "DataCommandsMixin",
+    "DimensionStorageFileFixMixin",
     "EntityDataAccessorAccessor",
     "MinecraftServerMixin",
     "PauseContextMixin",
     "PlayerListMixin",
     "ScoreboardCommandMixin",
     "ScoreboardMixin",
+    "ScoreboardSaveDataMixin",
     "ServerGamePacketListenerImplMixin",
     "ServerScoreboardMixin",
-    "StorageDataAccessorAccessor",
-    "ScoreboardSaveDataMixin"
+    "StorageDataAccessorAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
