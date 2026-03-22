@@ -164,9 +164,13 @@ public class SidebarNbtRenderable implements SidebarRenderable {
 
         @Override
         public void visitString(StringTag element) {
-            text.append(Component.literal(element.toString())
+            final var quotedEscaped = element.toString();
+            final var quote = Component.literal(quotedEscaped.substring(0, 1));
+            text.append(quote);
+            text.append(Component.literal(quotedEscaped.substring(1, quotedEscaped.length() - 1))
                     .withStyle(style -> style.applyFormat(STRING_FORMATTING))
             );
+            text.append(quote);
         }
 
         @Override
