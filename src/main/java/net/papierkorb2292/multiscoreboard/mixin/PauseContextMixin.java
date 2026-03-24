@@ -22,7 +22,7 @@ public class PauseContextMixin {
             method = "suspend",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/papierkorb2292/command_crafter/mixin/MinecraftServerAccessor;setTickStartTimeNanos(J)V"
+                    target = "Lnet/papierkorb2292/command_crafter/mixin/MinecraftServerAccessor;setNextTickTimeNanos(J)V"
             )
     )
     private void tickNbtSidebarManager(Supplier<Throwable> executionPausedThrowable, CallbackInfo ci) {
