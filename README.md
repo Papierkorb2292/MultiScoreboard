@@ -1,5 +1,7 @@
 # MultiScoreboard Minecraft Mod
 
+[<img src="https://badges.moddingx.org/modrinth/downloads/2e3UnTf0?style=flat" alt="Downloads on Modrinth"><img src="https://badges.moddingx.org/modrinth/versions/2e3UnTf0?style=flat" alt="Versions on Modrinth">](https://modrinth.com/mod/multiscoreboard)
+
 This Minecraft Fabric mod allows you to view multiple scoreboards
 and nbt data on the sidebar at the same time!
 
