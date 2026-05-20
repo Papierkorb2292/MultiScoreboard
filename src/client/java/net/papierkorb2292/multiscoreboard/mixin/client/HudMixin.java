@@ -10,6 +10,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.Hud;
 import net.minecraft.world.scores.Objective;
 import net.papierkorb2292.multiscoreboard.MultiScoreboardSidebarInterface;
 import net.papierkorb2292.multiscoreboard.client.MultiScoreboardClient;
@@ -27,8 +28,8 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
 
-@Mixin(Gui.class)
-public abstract class GuiMixin {
+@Mixin(Hud.class)
+public abstract class HudMixin {
 
     @Shadow @Final private Minecraft minecraft;
 
@@ -36,10 +37,10 @@ public abstract class GuiMixin {
             method = "extractScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/Gui;displayScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/world/scores/Objective;)V"
+                    target = "Lnet/minecraft/client/gui/Hud;displayScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/world/scores/Objective;)V"
             )
     )
-    private void multiScoreboard$translateSidebarTeamObjective(Gui inGameHud, GuiGraphicsExtractor context, Objective teamObjective, Operation<Void> op, @Share("sidebarHeights") LocalRef<Map<SidebarRenderable, Integer>> scoreboardHeightsRef) {
+    private void multiScoreboard$translateSidebarTeamObjective(Hud inGameHud, GuiGraphicsExtractor context, Objective teamObjective, Operation<Void> op, @Share("sidebarHeights") LocalRef<Map<SidebarRenderable, Integer>> scoreboardHeightsRef) {
         if(!MultiScoreboardClient.useMultiScoreboard()) {
             op.call(inGameHud, context, teamObjective);
             return;
@@ -93,7 +94,7 @@ public abstract class GuiMixin {
         }
         while(sorted.hasNext()) {
             var renderable = sorted.next();
-            renderable.getKey().render(context, (Gui)(Object)this);
+            renderable.getKey().render(context, (Hud)(Object)this);
             context.pose().translate(0, renderable.getValue() + MultiScoreboardClient.sidebarGap);
         }
 
@@ -128,9 +129,9 @@ public abstract class GuiMixin {
     }
 
     @ModifyVariable(
-            method = "displayScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/world/scores/Objective;)V",
-            at = @At("LOAD:LAST"),
-            ordinal = 1
+            method = "displayScoreboardSidebar",
+            at = @At("STORE:FIRST"),
+            name = "biggestWidth"
     )
     private int multiScoreboard$applyAdditionalScoreboardMaxWidth(int maxWidth) {
         if(SidebarObjectiveRenderable.CURRENT_MAX_WIDTH.get() != null) {

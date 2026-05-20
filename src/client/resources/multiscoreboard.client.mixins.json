@@ -4,8 +4,8 @@
   "compatibilityLevel": "JAVA_17",
   "client": [
     "ClientPacketListenerMixin",
-    "GuiAccessor",
-    "GuiMixin"
+    "HudAccessor",
+    "HudMixin"
   ],
   "injectors": {
     "defaultRequire": 1

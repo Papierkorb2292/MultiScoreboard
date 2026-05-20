@@ -1,8 +1,8 @@
 package net.papierkorb2292.multiscoreboard.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.Hud;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.numbers.StyledFormat;
 import net.minecraft.util.CommonColors;
@@ -31,7 +31,7 @@ public class SidebarSingleScoresRenderable implements SidebarRenderable {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor context, Gui inGameHud) {
+    public void render(GuiGraphicsExtractor context, Hud hud) {
         var textRenderer = Minecraft.getInstance().font;
         var title = objective.getDisplayName();
         var entries = buildEntries();

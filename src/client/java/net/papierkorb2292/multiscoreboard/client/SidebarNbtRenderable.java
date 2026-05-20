@@ -1,9 +1,8 @@
 package net.papierkorb2292.multiscoreboard.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.nbt.*;
+import net.minecraft.client.gui.Hud;
 import net.minecraft.nbt.ByteArrayTag;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CollectionTag;
@@ -54,7 +53,7 @@ public class SidebarNbtRenderable implements SidebarRenderable {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor context, Gui inGameHud) {
+    public void render(GuiGraphicsExtractor context, Hud hud) {
         var textRenderer = Minecraft.getInstance().font;
         var title = Component.nullToEmpty(nbtSidebarName);
         var entries = new ArrayList<List<TopLevelNbtVisitor.Entry>>();

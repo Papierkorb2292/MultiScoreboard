@@ -10,10 +10,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.KeyMapping;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.nbt.Tag;
-import net.minecraft.world.scores.Scoreboard;
-import net.minecraft.world.scores.DisplaySlot;
-import net.minecraft.world.scores.Objective;
-import net.minecraft.world.scores.PlayerTeam;
+import net.minecraft.world.scores.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.CommonColors;
 import net.minecraft.resources.Identifier;
@@ -83,10 +80,10 @@ public class MultiScoreboardClient implements ClientModInitializer {
 
             var scoreboard = Objects.requireNonNull(client.level).getScoreboard();
             PlayerTeam team = scoreboard.getPlayersTeam(Objects.requireNonNull(Minecraft.getInstance().player).getScoreboardName());
-            DisplaySlot scoreboardDisplaySlot;
+            Optional<TeamColor> teamColor;
             Objective teamObjective = null;
-            if (team != null && (scoreboardDisplaySlot = DisplaySlot.teamColorToSlot(team.getColor())) != null) {
-                teamObjective = scoreboard.getDisplayObjective(scoreboardDisplaySlot);
+            if (team != null && (teamColor = team.getColor()).isPresent()) {
+                teamObjective = scoreboard.getDisplayObjective(teamColor.get().displaySlot());
             }
             var calculatedHeights = calculateSidebarHeights(scoreboard, teamObjective);
             var totalHeight = calculatedHeights.getFirst();
@@ -146,10 +143,10 @@ public class MultiScoreboardClient implements ClientModInitializer {
         var player = Objects.requireNonNull(Minecraft.getInstance().player);
         var scoreboard = player.level().getScoreboard();
         PlayerTeam team = scoreboard.getPlayersTeam(player.getScoreboardName());
-        DisplaySlot scoreboardDisplaySlot;
+        Optional<TeamColor> teamColor;
         Objective teamObjective = null;
-        if (team != null && (scoreboardDisplaySlot = DisplaySlot.teamColorToSlot(team.getColor())) != null) {
-            teamObjective = scoreboard.getDisplayObjective(scoreboardDisplaySlot);
+        if (team != null && (teamColor = team.getColor()).isPresent()) {
+            teamObjective = scoreboard.getDisplayObjective(teamColor.get().displaySlot());
         }
         var calculatedHeights = calculateSidebarHeights(scoreboard, teamObjective);
         var totalHeight = calculatedHeights.getFirst();
