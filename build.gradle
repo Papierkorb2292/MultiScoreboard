@@ -30,6 +30,11 @@ loom {
 		}
 	}
 
+	runs {
+		named("client") {
+			vmArgs '-XX:+AllowEnhancedClassRedefinition', '-XX:+IgnoreUnrecognizedVMOptions'
+		}
+	}
 }
 
 dependencies {
