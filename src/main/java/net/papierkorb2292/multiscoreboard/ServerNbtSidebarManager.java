@@ -63,7 +63,7 @@ public class ServerNbtSidebarManager extends SavedData {
 
     public ServerNbtSidebarManager(MinecraftServer server, Map<String, Entry> entries) {
         this.server = server;
-        this.entries = new HashMap<>(entries);
+        this.entries = new ConcurrentHashMap<>(entries);
         tick(); // Make sure to populate all lastSentNbt fields
     }
 
