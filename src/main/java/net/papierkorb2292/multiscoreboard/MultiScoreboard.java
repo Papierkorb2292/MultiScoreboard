@@ -14,14 +14,6 @@ public class MultiScoreboard implements ModInitializer {
     public static final String MOD_ID = "multiscoreboard";
     public static final Logger LOGGER = LogManager.getLogger();
 
-    // Multiscoreboard commands are executed on a separate thread, so they keep working when the CommandCrafter debugger suspends the server
-    public static final String[] THREADED_COMMANDS = new String[] {
-            "scoreboard objectives setdisplay sidebar",
-            "scoreboard objectives setdisplay indivSidebar",
-            "data multiscoreboard"
-    };
-    public static final ExecutorService THREADED_COMMAND_EXECUTOR = Executors.newSingleThreadExecutor();
-
     @Override
     public void onInitialize() {
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
