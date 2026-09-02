@@ -9,6 +9,7 @@ import net.minecraft.server.ServerScoreboard;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.server.level.ServerPlayer;
 import net.papierkorb2292.multiscoreboard.MultiScoreboardSidebarInterface;
+import net.papierkorb2292.multiscoreboard.SyncFinishedS2CPacket;
 import net.papierkorb2292.multiscoreboard.ToggleSingleScoreSidebarS2CPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -56,5 +57,6 @@ public class PlayerListMixin {
                 ServerPlayNetworking.send(player, new ToggleSingleScoreSidebarS2CPacket(objective.getName(), scoreHolder));
             }
         }
+        ServerPlayNetworking.send(player, SyncFinishedS2CPacket.INSTANCE);
     }
 }

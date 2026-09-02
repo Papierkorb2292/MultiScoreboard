@@ -7,6 +7,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.Options;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -24,6 +25,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import javax.swing.text.html.Option;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
@@ -94,7 +96,7 @@ public abstract class HudMixin {
         }
         while(sorted.hasNext()) {
             var renderable = sorted.next();
-            renderable.getKey().render(context, (Hud)(Object)this);
+            renderable.getKey().render(context, (Hud)(Object)this, tickCounter);
             context.pose().translate(0, renderable.getValue() + MultiScoreboardClient.sidebarGap);
         }
 
@@ -139,5 +141,20 @@ public abstract class HudMixin {
             SidebarObjectiveRenderable.CURRENT_MAX_WIDTH.set(maxWidth);
         }
         return maxWidth;
+    }
+
+    @WrapOperation(
+            method = "displayScoreboardSidebar",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/Options;getBackgroundColor(F)I"
+            )
+    )
+    private int multiScoreboard$applyBackgroundColorAnimation(Options options, float defaultOpacity, Operation<Integer> op) {
+        final var animationContext = SidebarObjectiveRenderable.OBJECTIVE_ADD_ANIMATION_CONTEXT.get();
+        if(animationContext != null) {
+            return MultiScoreboardClient.getSidebarAddedAnimatedBackground(animationContext.getFirst(), null, (Hud)(Object)this, animationContext.getSecond(),  defaultOpacity);
+        }
+        return op.call(options, defaultOpacity);
     }
 }

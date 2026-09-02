@@ -1,21 +1,26 @@
 package net.papierkorb2292.multiscoreboard.client;
 
 import com.mojang.datafixers.util.Pair;
+import it.unimi.dsi.fastutil.objects.*;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.KeyMapping;
 import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.gui.Hud;
 import net.minecraft.nbt.Tag;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.scores.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.CommonColors;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.papierkorb2292.multiscoreboard.*;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
@@ -24,6 +29,7 @@ import java.util.stream.Stream;
 public class MultiScoreboardClient implements ClientModInitializer {
     private static boolean useMultiScoreboard = false;
     private static final Map<String, List<Tag>> nbtSidebars = new HashMap<>();
+    private static final Object2FloatMap<SidebarRenderableKey> sidebarAddedTime = new Object2FloatOpenHashMap<>();
     private static int sidebarScrollTranslation = 0;
     private static final int scrollAmount = 10;
     private static final int maxTranslationBoundary = 10;
@@ -52,9 +58,18 @@ public class MultiScoreboardClient implements ClientModInitializer {
             if(objective == null) return;
             ((MultiScoreboardSidebarInterface)scoreboard).multiScoreboard$toggleSingleScoreSidebar(objective, packet.score());
         });
+        ClientPlayNetworking.registerGlobalReceiver(SyncFinishedS2CPacket.ID, (packet, context) -> {
+            // The sidebar entries that were already there when the player joined shouldn't be animated
+            var scoreboard = context.player().level().getScoreboard();
+            final var existingEntries = calculateSidebarHeights(scoreboard, null).getSecond();
+            for(final var sidebar : existingEntries.keySet()) {
+                markSidebarAddedTimeDone(sidebar);
+            }
+        });
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             useMultiScoreboard = false;
             nbtSidebars.clear();
+            sidebarAddedTime.clear();
         });
 
         final KeyMapping.Category keybindCategory = KeyMapping.Category.register(Identifier.fromNamespaceAndPath("multiscoreboard", "generic"));
@@ -200,10 +215,72 @@ public class MultiScoreboardClient implements ClientModInitializer {
             totalHeight += teamObjectiveHeight + sidebarGap;
         }
 
+        clearRemovedSidebarsAddedTime(scoreboardHeights.keySet());
+
         return Pair.of(totalHeight, scoreboardHeights);
+    }
+
+    private static final float sidebarAddedAnimationLengthTicks = 5;
+
+    private static void clearRemovedSidebarsAddedTime(Collection<SidebarRenderable> sidebars) {
+        sidebarAddedTime.object2FloatEntrySet().removeIf(entry -> {
+            final var clazz = entry.getKey().clazz();
+            final var name = entry.getKey().name();
+            final var entryId = entry.getKey().entryId();
+            return sidebars.stream().noneMatch(sidebar -> {
+                if(sidebar.getClass() == clazz && sidebar.getSortName().equals(name) && (entryId == null || sidebar.getActiveEntryIds().contains(entryId)))
+                    return true;
+                if(sidebar instanceof SidebarObjectiveRenderable objective) {
+                    var child = objective.singleScoresRenderable;
+                    if(child.getClass() == clazz && child.getSortName().equals(name) && (entryId == null || child.getActiveEntryIds().contains(entryId)))
+                        return true;
+                }
+                return false;
+            });
+        });
+    }
+
+    private static void markSidebarAddedTimeDone(SidebarRenderable sidebar) {
+        final var finishedTime = Minecraft.getInstance().gui.hud.getGuiTicks() - sidebarAddedAnimationLengthTicks;
+        for(var entryId : sidebar.getActiveEntryIds()) {
+            final var pair = new SidebarRenderableKey(sidebar.getClass(), sidebar.getSortName(), entryId);
+            sidebarAddedTime.put(pair, finishedTime);
+        }
+        sidebarAddedTime.put(new SidebarRenderableKey(sidebar.getClass(), sidebar.getSortName(), null), finishedTime);
+        if(sidebar instanceof SidebarObjectiveRenderable objective) {
+            markSidebarAddedTimeDone(objective.singleScoresRenderable);
+        }
+    }
+
+    public static float getSidebarAddedAnimationProgress(SidebarRenderable sidebar, String entryId, Hud hud, DeltaTracker deltaTracker) {
+        final var pair = new SidebarRenderableKey(sidebar.getClass(), sidebar.getSortName(), entryId);
+        final var currentTime = hud.getGuiTicks() + deltaTracker.getGameTimeDeltaPartialTick(false);
+        if(!sidebarAddedTime.containsKey(pair)) {
+            if(sidebarAddedTime.isEmpty()) {
+                // If this is the first sidebar entry, don't play an animation, since it's already obvious where the new entry is
+                sidebarAddedTime.put(pair, currentTime - sidebarAddedAnimationLengthTicks);
+            } else {
+                sidebarAddedTime.put(pair, currentTime);
+            }
+        }
+        return Math.min(1, (currentTime - sidebarAddedTime.getFloat(pair)) / sidebarAddedAnimationLengthTicks);
+    }
+
+    public static int getSidebarAddedAnimatedBackground(SidebarRenderable sidebar, String entryId, Hud hud, DeltaTracker deltaTracker, float defaultOpacity) {
+        final var t = getSidebarAddedAnimationProgress(sidebar, entryId, hud, deltaTracker);
+        final var options = Minecraft.getInstance().options;
+        final var actualOpacity = options.getBackgroundOpacity(defaultOpacity);
+        return ARGB.colorFromFloat(
+                actualOpacity,
+                (1-t) * 0,
+                (1-t) * 1,
+                (1-t) * 1
+        );
     }
 
     public static Map<String, List<Tag>> getNbtSidebars() {
         return nbtSidebars;
     }
+
+    public record SidebarRenderableKey(Class<? extends SidebarRenderable> clazz, String name, @Nullable String entryId) { }
 }

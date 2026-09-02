@@ -1,5 +1,6 @@
 package net.papierkorb2292.multiscoreboard.client;
 
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.Hud;
@@ -53,7 +54,7 @@ public class SidebarNbtRenderable implements SidebarRenderable {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor context, Hud hud) {
+    public void render(GuiGraphicsExtractor context, Hud hud, DeltaTracker deltaTracker) {
         var textRenderer = Minecraft.getInstance().font;
         var title = Component.nullToEmpty(nbtSidebarName);
         var entries = new ArrayList<List<TopLevelNbtVisitor.Entry>>();
@@ -82,8 +83,8 @@ public class SidebarNbtRenderable implements SidebarRenderable {
         int border = 3;
         int leftX = context.guiWidth() - maxWidth - border;
         int rightX = context.guiWidth() - border + 2;
-        int entryBackgroundColor = Minecraft.getInstance().options.getBackgroundColor(0.3f);
-        int titleBackgroundColor = Minecraft.getInstance().options.getBackgroundColor(0.4f);
+        int entryBackgroundColor = MultiScoreboardClient.getSidebarAddedAnimatedBackground(this, null, hud, deltaTracker, 0.3f);
+        int titleBackgroundColor = MultiScoreboardClient.getSidebarAddedAnimatedBackground(this, null, hud, deltaTracker, 0.4f);
         int titleLowerY = lowerY - entriesHeight;
         context.fill(leftX - 2, titleLowerY - textRenderer.lineHeight - 1, rightX, titleLowerY - 1, titleBackgroundColor);
         context.fill(leftX - 2, titleLowerY - 1, rightX, lowerY, entryBackgroundColor);

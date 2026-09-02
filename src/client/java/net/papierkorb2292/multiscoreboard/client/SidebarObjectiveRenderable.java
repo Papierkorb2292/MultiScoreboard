@@ -1,5 +1,7 @@
 package net.papierkorb2292.multiscoreboard.client;
 
+import com.mojang.datafixers.util.Pair;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.Hud;
@@ -9,9 +11,10 @@ import net.papierkorb2292.multiscoreboard.mixin.client.HudAccessor;
 public class SidebarObjectiveRenderable implements SidebarRenderable {
 
     public static final ThreadLocal<Integer> CURRENT_MAX_WIDTH = new ThreadLocal<>();
+    public static final ThreadLocal<Pair<SidebarRenderable, DeltaTracker>> OBJECTIVE_ADD_ANIMATION_CONTEXT = new ThreadLocal<>();
 
+    public final SidebarSingleScoresRenderable singleScoresRenderable;
     private final Objective objective;
-    private final SidebarSingleScoresRenderable singleScoresRenderable;
     private final boolean showSingleScores;
 
     public SidebarObjectiveRenderable(Objective objective, boolean showSingleScores) {
@@ -30,17 +33,19 @@ public class SidebarObjectiveRenderable implements SidebarRenderable {
     }
 
     @Override
-    public void render(GuiGraphicsExtractor context, Hud hud) {
+    public void render(GuiGraphicsExtractor context, Hud hud, DeltaTracker deltaTracker) {
         var singleScoresEntries = singleScoresRenderable.buildEntries();
         CURRENT_MAX_WIDTH.set(singleScoresRenderable.getMaxEntryWidth(singleScoresEntries));
+        OBJECTIVE_ADD_ANIMATION_CONTEXT.set(Pair.of(this, deltaTracker));
         ((HudAccessor) hud).callDisplayScoreboardSidebar(context, objective);
         if(showSingleScores) {
             context.pose().pushMatrix();
             context.pose().translate(0, calculateVanillaEntriesHeight());
-            singleScoresRenderable.renderEntries(context, singleScoresEntries, CURRENT_MAX_WIDTH.get());
+            singleScoresRenderable.renderEntries(context, singleScoresEntries, CURRENT_MAX_WIDTH.get(), hud, deltaTracker);
             context.pose().popMatrix();
         }
         CURRENT_MAX_WIDTH.remove();
+        OBJECTIVE_ADD_ANIMATION_CONTEXT.remove();
     }
 
     private int calculateVanillaEntriesHeight() {

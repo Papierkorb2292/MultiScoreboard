@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerNbtSidebarManager extends SavedData {
 
