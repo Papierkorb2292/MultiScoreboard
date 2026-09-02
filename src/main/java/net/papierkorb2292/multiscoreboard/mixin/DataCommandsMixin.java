@@ -7,6 +7,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.server.commands.ArgProvider;
 import net.minecraft.server.commands.data.DataAccessor;
 import net.minecraft.commands.arguments.NbtPathArgument;
 import net.minecraft.commands.Commands;
@@ -25,26 +26,26 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 @Mixin(DataCommands.class)
 public abstract class DataCommandsMixin {
 
-    @SuppressWarnings("InvalidInjectorMethodSignature")
     @ModifyVariable(
             method = "register",
-            at = @At("STORE")
+            at = @At("STORE"),
+            name = "targetProvider"
     )
-    private static DataCommands.DataProvider multiScoreboard$registerNbtSidebarCommand(DataCommands.DataProvider type, @Local LiteralArgumentBuilder<CommandSourceStack> literalArgumentBuilder) {
-        literalArgumentBuilder.then(
+    private static ArgProvider<DataAccessor> multiScoreboard$registerNbtSidebarCommand(ArgProvider<DataAccessor> targetProvider, @Local(name = "root") LiteralArgumentBuilder<CommandSourceStack> root) {
+        root.then(
                 Commands.literal("multiscoreboard")
-                        .then(type.wrap(
+                        .then(targetProvider.wrap(
                                 Commands.literal("toggle"), builder ->
                                         builder.executes(context -> multiScoreboard$executeDisplaySidebar(
                                                 context.getSource(),
-                                                type.access(context),
+                                                targetProvider.access(context),
                                                 ServerNbtSidebarManager.ROOT_PATH,
                                                 null
                                         ))
                                                 .then(Commands.argument("path", NbtPathArgument.nbtPath())
                                                         .executes(context -> multiScoreboard$executeDisplaySidebar(
                                                                 context.getSource(),
-                                                                type.access(context),
+                                                                targetProvider.access(context),
                                                                 NbtPathArgument.getPath(context, "path"),
                                                                 null
                                                         ))
@@ -52,15 +53,15 @@ public abstract class DataCommandsMixin {
                                                                 Commands.argument("name", StringArgumentType.string())
                                                                         .executes(context -> multiScoreboard$executeDisplaySidebar(
                                                                                 context.getSource(),
-                                                                                type.access(context),
+                                                                                targetProvider.access(context),
                                                                                 NbtPathArgument.getPath(context, "path"),
                                                                                 StringArgumentType.getString(context, "name")
                                                                         ))))))
-                        .then(type.wrap(
+                        .then(targetProvider.wrap(
                                 Commands.literal("removeAll"), builder ->
                                         builder.executes(context -> multiScoreboard$removeDataObjectSidebar(
                                                 context.getSource(),
-                                                type.access(context)
+                                                targetProvider.access(context)
                                         )))
                                 .executes(context ->
                                         multiScoreboard$removeAllNbtSidebars(context.getSource())
@@ -76,7 +77,7 @@ public abstract class DataCommandsMixin {
                                                 context.getSource(),
                                                 StringArgumentType.getString(context, "name")
                                         )))));
-        return type;
+        return targetProvider;
     }
 
     @Unique

@@ -21,7 +21,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.papierkorb2292.multiscoreboard.*;
 import org.jspecify.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -75,14 +74,12 @@ public class MultiScoreboardClient implements ClientModInitializer {
         final KeyMapping.Category keybindCategory = KeyMapping.Category.register(Identifier.fromNamespaceAndPath("multiscoreboard", "generic"));
         scrollUpKeyBinding = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.multiscoreboard.scroll_up",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_UP,
+                InputConstants.KEY_UP,
                 keybindCategory
         ));
         scrollDownKeyBinding = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.multiscoreboard.scroll_down",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_DOWN,
+                InputConstants.KEY_DOWN,
                 keybindCategory
         ));
 
@@ -111,7 +108,7 @@ public class MultiScoreboardClient implements ClientModInitializer {
                 sidebarScrollTranslation = 0;
                 return;
             }
-            var shouldJumpScoreboard = InputConstants.isKeyDown(client.getWindow(), GLFW.GLFW_KEY_LEFT_CONTROL);
+            var shouldJumpScoreboard = InputConstants.isKeyDown(InputConstants.KEY_LCONTROL);
             if(shouldJumpScoreboard) {
                 if(wasUpPressed) {
                     do {
