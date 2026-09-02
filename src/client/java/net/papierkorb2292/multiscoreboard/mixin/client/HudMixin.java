@@ -7,9 +7,8 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Options;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.Hud;
 import net.minecraft.world.scores.Objective;
@@ -25,7 +24,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import javax.swing.text.html.Option;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
@@ -34,6 +32,9 @@ import java.util.Objects;
 public abstract class HudMixin {
 
     @Shadow @Final private Minecraft minecraft;
+
+    @Shadow
+    public abstract Font getFont();
 
     @WrapOperation(
             method = "extractScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V",
@@ -146,15 +147,15 @@ public abstract class HudMixin {
     @WrapOperation(
             method = "displayScoreboardSidebar",
             at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/Options;getBackgroundColor(F)I"
+                    value = "INVOKE:LAST",
+                    target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;fill(IIIII)V"
             )
     )
-    private int multiScoreboard$applyBackgroundColorAnimation(Options options, float defaultOpacity, Operation<Integer> op) {
+    private void multiScoreboard$applyBackgroundColorAnimation(GuiGraphicsExtractor extractor, int x0, int y0, int x1, int y1, int col, Operation<Void> op) {
+        op.call(extractor, x0, y0, x1, y1, col);
         final var animationContext = SidebarObjectiveRenderable.OBJECTIVE_ADD_ANIMATION_CONTEXT.get();
         if(animationContext != null) {
-            return MultiScoreboardClient.getSidebarAddedAnimatedBackground(animationContext.getFirst(), null, (Hud)(Object)this, animationContext.getSecond(),  defaultOpacity);
+            animationContext.getFirst().outlineAddedSidebar(extractor, x0, y0 - getFont().lineHeight, x1, y1, null, (Hud)(Object)this, animationContext.getSecond());
         }
-        return op.call(options, defaultOpacity);
     }
 }

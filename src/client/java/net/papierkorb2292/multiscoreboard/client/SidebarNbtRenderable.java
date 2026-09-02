@@ -83,11 +83,13 @@ public class SidebarNbtRenderable implements SidebarRenderable {
         int border = 3;
         int leftX = context.guiWidth() - maxWidth - border;
         int rightX = context.guiWidth() - border + 2;
-        int entryBackgroundColor = MultiScoreboardClient.getSidebarAddedAnimatedBackground(this, null, hud, deltaTracker, 0.3f);
-        int titleBackgroundColor = MultiScoreboardClient.getSidebarAddedAnimatedBackground(this, null, hud, deltaTracker, 0.4f);
+        int entryBackgroundColor = Minecraft.getInstance().options.getBackgroundColor(0.3f);
+        int titleBackgroundColor = Minecraft.getInstance().options.getBackgroundColor(0.4f);
         int titleLowerY = lowerY - entriesHeight;
-        context.fill(leftX - 2, titleLowerY - textRenderer.lineHeight - 1, rightX, titleLowerY - 1, titleBackgroundColor);
+        int titleUpperY = titleLowerY - textRenderer.lineHeight;
+        context.fill(leftX - 2, titleUpperY - 1, rightX, titleLowerY - 1, titleBackgroundColor);
         context.fill(leftX - 2, titleLowerY - 1, rightX, lowerY, entryBackgroundColor);
+        outlineAddedSidebar(context, leftX - 2, titleUpperY - 1, rightX, lowerY, null, hud, deltaTracker);
         context.text(textRenderer, title, leftX + maxWidth / 2 - titleWidth / 2, titleLowerY - textRenderer.lineHeight, CommonColors.WHITE, false);
         var i = 0;
         for(var section : entries) {

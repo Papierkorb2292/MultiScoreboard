@@ -44,8 +44,9 @@ public class SidebarSingleScoresRenderable implements SidebarRenderable {
         int border = 3;
         int leftX = context.guiWidth() - maxWidth - border;
         int rightX = context.guiWidth() - border + 2;
-        int titleBackgroundColor = MultiScoreboardClient.getSidebarAddedAnimatedBackground(this, null, hud, deltaTracker, 0.4f);
+        int titleBackgroundColor = Minecraft.getInstance().options.getBackgroundColor(0.4f);
         context.fill(leftX - 2, titleLowerY - textRenderer.lineHeight - 1, rightX, titleLowerY, titleBackgroundColor);
+        outlineAddedSidebar(context, leftX - 2, titleLowerY - textRenderer.lineHeight - 1, rightX, titleLowerY, null, hud, deltaTracker);
         context.text(textRenderer, title, leftX + maxWidth / 2 - titleWidth / 2, titleLowerY - textRenderer.lineHeight, CommonColors.WHITE, false);
         renderEntries(context, entries, maxWidth, hud, deltaTracker);
     }
@@ -58,9 +59,10 @@ public class SidebarSingleScoresRenderable implements SidebarRenderable {
         int rightX = Minecraft.getInstance().getWindow().getGuiScaledWidth() - border + 2;
         for(int i = 0; i < entries.size(); i++) {
             var entry = entries.get(i);
-            int entryBackgroundColor = MultiScoreboardClient.getSidebarAddedAnimatedBackground(this, entry.nameString, hud , deltaTracker, 0.3f);
+            int entryBackgroundColor = Minecraft.getInstance().options.getBackgroundColor(0.3f);
             var entryUpperY = upperY + i * Minecraft.getInstance().font.lineHeight + (i + 1) * SCORE_GAP;
             context.fill(leftX - 2, entryUpperY - 1, rightX, entryUpperY + Minecraft.getInstance().font.lineHeight, entryBackgroundColor);
+            outlineAddedSidebar(context, leftX - 2, entryUpperY - 1, rightX, entryUpperY + Minecraft.getInstance().font.lineHeight, entry.nameString, hud, deltaTracker);
             context.text(textRenderer, entry.name, leftX, entryUpperY, CommonColors.WHITE, false);
             context.text(textRenderer, entry.value, rightX - textRenderer.width(entry.value), entryUpperY, CommonColors.WHITE, false);
         }

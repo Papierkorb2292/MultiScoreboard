@@ -274,6 +274,15 @@ public class MultiScoreboardClient implements ClientModInitializer {
                 (1-t) * 1
         );
     }
+    public static int fadeOutSidebarAddedAnimatedBackground(SidebarRenderable sidebar, String entryId, Hud hud, DeltaTracker deltaTracker, float initialOpacity) {
+        final var t = getSidebarAddedAnimationProgress(sidebar, entryId, hud, deltaTracker);
+        return ARGB.colorFromFloat(
+                initialOpacity * (1-t),
+                0,
+                1,
+                1
+        );
+    }
 
     public static Map<String, List<Tag>> getNbtSidebars() {
         return nbtSidebars;
