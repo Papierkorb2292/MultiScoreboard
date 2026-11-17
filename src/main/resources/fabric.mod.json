@@ -7,6 +7,10 @@
 	"authors": [
 		"Papierkorb2292"
 	],
+	"contact": {
+		"sources": "https://github.com/Papierkorb2292/MultiScoreboard",
+		"issues": "https://github.com/Papierkorb2292/MultiScoreboard/issues"
+	},
 	"license": "CC0-1.0",
 	"icon": "assets/multiscoreboard/icon.png",
 	"environment": "*",
@@ -16,6 +20,9 @@
 		],
 		"client": [
 			"net.papierkorb2292.multiscoreboard.client.MultiScoreboardClient"
+		],
+		"modmenu": [
+			"net.papierkorb2292.multiscoreboard.client.MultiScoreboardModMenu"
 		]
     },
 	"mixins": [

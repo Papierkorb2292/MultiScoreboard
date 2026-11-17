@@ -1,4 +1,7 @@
 {
+  "multiscoreboard.config.title": "MultiScoreboard Config",
+  "multiscoreboard.config.scoreboard_position": "Scoreboard Position",
+  "multiscoreboard.config.scoreboard_position.description": "The position on the screen where the scoreboards are displayed",
   "multiscoreboard.commands.scoreboard.objectives.display.removed": "Removed objective %s from display slot %s",
   "multiscoreboard.commands.scoreboard.objectives.display.indivSidebar.removed": "Removed score %s of objective %s from sidebar",
   "multiscoreboard.commands.scoreboard.objectives.display.indivSidebar.removed.none": "No single scores are displayed for objective %s on sidebar",
