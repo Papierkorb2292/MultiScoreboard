@@ -80,9 +80,10 @@ public class SidebarNbtRenderable implements SidebarRenderable {
             }
         }
         int lowerY = context.guiHeight() / 2 + entriesHeight;
-        int border = 3;
-        int leftX = context.guiWidth() - maxWidth - border;
-        int rightX = context.guiWidth() - border + 2;
+        int borderEdge = 1;
+        int borderCenter = 2;
+        int leftX = MultiScoreboardClient.getScoreboardXPosition(maxWidth, borderEdge, borderCenter);
+        int rightX = leftX + maxWidth + borderCenter;
         int entryBackgroundColor = Minecraft.getInstance().options.getBackgroundColor(0.3f);
         int titleBackgroundColor = Minecraft.getInstance().options.getBackgroundColor(0.4f);
         int titleLowerY = lowerY - entriesHeight;

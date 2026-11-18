@@ -108,14 +108,18 @@ public class MultiScoreboardClient implements ClientModInitializer {
                 sidebarScrollTranslation = 0;
                 return;
             }
+            var positionOffset = getScoreboardPositionYOffset(totalHeight); // Position offset is handled in a similar way to clampScrollTranslation
             var shouldJumpScoreboard = InputConstants.isKeyDown(InputConstants.KEY_LCONTROL);
             if(shouldJumpScoreboard) {
                 if(wasUpPressed) {
                     do {
-                        var accumulatedLength = sidebarScrollTranslation;
+                        var accumulatedLength = sidebarScrollTranslation + positionOffset;
                         for (var entry : sortedObjectives) {
                             var newLength = entry.getValue() + sidebarGap;
                             accumulatedLength += newLength;
+                            // Explanation: Think of maxTranslation as the space that the scoreboards take up above the screen when scrollTranslation=0,positionOffset=0.
+                            // We are going through the scoreboards, starting at the top, until they span the whole space above the screen, which gives
+                            // us the next scoreboard that is supposed to come into view.
                             if (accumulatedLength >= maxTranslation) {
                                 sidebarScrollTranslation += newLength - (accumulatedLength - maxTranslation);
                                 break;
@@ -126,7 +130,7 @@ public class MultiScoreboardClient implements ClientModInitializer {
                 }
                 if(wasDownPressed) {
                     do {
-                        var accumulatedLength = -sidebarScrollTranslation;
+                        var accumulatedLength = -sidebarScrollTranslation - positionOffset;
                         for (var i = sortedObjectives.size() - 1; i >= 0; i--) {
                             var entry = sortedObjectives.get(i);
                             var newLength = entry.getValue() + sidebarGap;
@@ -142,11 +146,11 @@ public class MultiScoreboardClient implements ClientModInitializer {
                 return;
             }
             if(isUpPressed) {
-                sidebarScrollTranslation = Math.min(sidebarScrollTranslation + scrollAmount, maxTranslation);
+                sidebarScrollTranslation = Math.min(sidebarScrollTranslation + scrollAmount, maxTranslation - positionOffset);
                 return;
             }
             if(isDownPressed) {
-                sidebarScrollTranslation = Math.max(sidebarScrollTranslation - scrollAmount, -maxTranslation);
+                sidebarScrollTranslation = Math.max(sidebarScrollTranslation - scrollAmount, -maxTranslation - positionOffset);
             }
         });
     }
@@ -167,7 +171,11 @@ public class MultiScoreboardClient implements ClientModInitializer {
             sidebarScrollTranslation = 0;
             return;
         }
-        sidebarScrollTranslation = Mth.clamp(sidebarScrollTranslation, -maxTranslation, maxTranslation);
+        var positionOffset = getScoreboardPositionYOffset(totalHeight);
+        // Subtract position offset from both sides of the clamp. For example:
+        // When displaying a scoreboard at the top of the screen, the position offset is the same as max translation,
+        // so they cancel out for 'max' and the scroll translation can never be above 0 (which would leave a gap at the top)
+        sidebarScrollTranslation = Math.clamp(sidebarScrollTranslation, -maxTranslation - positionOffset, maxTranslation - positionOffset);
     }
 
     public static boolean useMultiScoreboard() {
@@ -282,6 +290,23 @@ public class MultiScoreboardClient implements ClientModInitializer {
                 1,
                 1
         );
+    }
+
+    public static int getScoreboardPositionYOffset(int scoreboardHeight) {
+        return switch (MultiScoreboard.config.getScoreboardPosition()) {
+            // The same as max translation
+            case TOP_RIGHT, TOP_LEFT -> (scoreboardHeight - Minecraft.getInstance().getWindow().getGuiScaledHeight())/2 + maxTranslationBoundary;
+            case CENTER_RIGHT, CENTER_LEFT -> 0;
+            // Negative of max translation
+            case BOTTOM_RIGHT, BOTTOM_LEFT -> - (scoreboardHeight - Minecraft.getInstance().getWindow().getGuiScaledHeight())/2 - maxTranslationBoundary;
+        };
+    }
+
+    public static int getScoreboardXPosition(int maxWidth, int borderEdge, int borderCenter) {
+        return switch (MultiScoreboard.config.getScoreboardPosition()) {
+            case BOTTOM_RIGHT, CENTER_RIGHT, TOP_RIGHT -> Minecraft.getInstance().getWindow().getGuiScaledWidth() - maxWidth - borderEdge - borderCenter;
+            case BOTTOM_LEFT, CENTER_LEFT, TOP_LEFT -> borderEdge;
+        };
     }
 
     public static Map<String, List<Tag>> getNbtSidebars() {

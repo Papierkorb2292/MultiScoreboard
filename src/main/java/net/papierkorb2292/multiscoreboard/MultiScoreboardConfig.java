@@ -13,7 +13,7 @@ public class MultiScoreboardConfig {
     public static final String SCOREBOARD_POSITION_NAME = "scoreboard-position";
     private static final Properties configDefaults = new Properties();
     static {
-        configDefaults.setProperty(SCOREBOARD_POSITION_NAME, ScoreboardPosition.CENTER_RIGHT.value);
+        configDefaults.setProperty(SCOREBOARD_POSITION_NAME, ScoreboardPosition.CENTER_RIGHT.name);
     }
 
     private ScoreboardPosition scoreboardPosition;
@@ -22,18 +22,18 @@ public class MultiScoreboardConfig {
     private final Path configPath;
 
     private MultiScoreboardConfig(Properties properties, Path configPath, @Nullable String configVersion, String modVersion) {
-        scoreboardPosition = ScoreboardPosition.fromValue(properties.getProperty(SCOREBOARD_POSITION_NAME));
+        scoreboardPosition = ScoreboardPosition.fromName(properties.getProperty(SCOREBOARD_POSITION_NAME));
         this.configPath = configPath;
         this.modVersion = modVersion;
-        if (configVersion == null || configVersion.equals(modVersion)) {
+        if (configVersion == null)
             return;
-        }
-        saveToFile(configPath);
+        if (!configVersion.equals(modVersion))
+            saveToFile(configPath);
     }
 
     public void saveToFile(Path path) {
         final var properties = new Properties();
-        properties.setProperty(SCOREBOARD_POSITION_NAME, scoreboardPosition.value);
+        properties.setProperty(SCOREBOARD_POSITION_NAME, scoreboardPosition.name);
         try (var writer = new java.io.FileWriter(path.toFile())) {
             writer.append('v').append(modVersion).append('\n');
             properties.store(writer, "MultiScoreboard Config");
@@ -78,29 +78,30 @@ public class MultiScoreboardConfig {
     }
 
     public enum ScoreboardPosition {
-            CENTER_RIGHT("Center-Right"),
-            TOP_RIGHT("Top-Right"),
-            TOP_LEFT("Top-Left"),
-            CENTER_LEFT("Center-Left");
+        BOTTOM_RIGHT("Bottom-Right"),
+        CENTER_RIGHT("Center-Right"),
+        TOP_RIGHT("Top-Right"),
+        TOP_LEFT("Top-Left"),
+        CENTER_LEFT("Center-Left"),
+        BOTTOM_LEFT("Bottom-Left");
 
-            private final String value;
+        private final String name;
 
-            ScoreboardPosition(String value) {
-                this.value = value;
-            }
+        ScoreboardPosition(String name) {
+            this.name = name;
+        }
 
-            public String getValue() {
-                return value;
-            }
+        public String getName() {
+            return name;
+        }
 
-            public static ScoreboardPosition fromValue(String value) {
-                for (var position : values()) {
-                    if (position.value.equals(value)) {
-                        return position;
-                    }
+        public static ScoreboardPosition fromName(String name) {
+            for (var position : values()) {
+                if (position.name.equals(name)) {
+                    return position;
                 }
-                return CENTER_RIGHT;
             }
+            return CENTER_RIGHT;
+        }
     }
-
 }

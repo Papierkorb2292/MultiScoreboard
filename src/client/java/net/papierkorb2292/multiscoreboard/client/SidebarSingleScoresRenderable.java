@@ -54,9 +54,10 @@ public class SidebarSingleScoresRenderable implements SidebarRenderable {
     public void renderEntries(GuiGraphicsExtractor context, List<Entry> entries, int maxWidth, Hud hud, DeltaTracker deltaTracker) {
         var textRenderer = Minecraft.getInstance().font;
         int upperY = Minecraft.getInstance().getWindow().getGuiScaledHeight() / 2;
-        int border = 3;
-        int leftX = Minecraft.getInstance().getWindow().getGuiScaledWidth() - maxWidth - border;
-        int rightX = Minecraft.getInstance().getWindow().getGuiScaledWidth() - border + 2;
+        int borderEdge = 1;
+        int borderCenter = 2;
+        int leftX = MultiScoreboardClient.getScoreboardXPosition(maxWidth, borderEdge, borderCenter);
+        int rightX = leftX + maxWidth + borderCenter;
         for(int i = 0; i < entries.size(); i++) {
             var entry = entries.get(i);
             int entryBackgroundColor = Minecraft.getInstance().options.getBackgroundColor(0.3f);

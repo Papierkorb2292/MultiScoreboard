@@ -25,12 +25,12 @@ public class MultiScoreboardConfigScreen extends OptionsSubScreen {
                     _ -> Tooltip.create(Component.translatable(
                             convertNameToTranslationKey(MultiScoreboardConfig.SCOREBOARD_POSITION_NAME) + ".description"
                     )),
-                    (_, value) -> Component.literal(value.getValue()),
+                    (_, value) -> Component.literal(value.getName()),
                     new OptionInstance.Enum<>(
                             Arrays.asList(MultiScoreboardConfig.ScoreboardPosition.values()),
                             com.mojang.serialization.Codec.STRING.xmap(
-                                    MultiScoreboardConfig.ScoreboardPosition::fromValue,
-                                    MultiScoreboardConfig.ScoreboardPosition::getValue
+                                    MultiScoreboardConfig.ScoreboardPosition::fromName,
+                                    MultiScoreboardConfig.ScoreboardPosition::getName
                             )
                     ),
                     config.getScoreboardPosition(),

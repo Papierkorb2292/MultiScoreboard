@@ -12,6 +12,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.Hud;
 import net.minecraft.world.scores.Objective;
+import net.papierkorb2292.multiscoreboard.MultiScoreboard;
 import net.papierkorb2292.multiscoreboard.MultiScoreboardSidebarInterface;
 import net.papierkorb2292.multiscoreboard.client.MultiScoreboardClient;
 import net.papierkorb2292.multiscoreboard.client.SidebarObjectiveRenderable;
@@ -60,7 +61,7 @@ public abstract class HudMixin {
 
         context.pose().pushMatrix();
         //noinspection IntegerDivisionInFloatingPointContext
-        context.pose().translate(0, Minecraft.getInstance().font.lineHeight -(teamScoreboardHeight + totalRestHeight)/2 + MultiScoreboardClient.getSidebarScrollTranslation());
+        context.pose().translate(0, Minecraft.getInstance().font.lineHeight -(teamScoreboardHeight + totalRestHeight)/2 + MultiScoreboardClient.getSidebarScrollTranslation() + MultiScoreboardClient.getScoreboardPositionYOffset(teamScoreboardHeight + totalRestHeight));
         op.call(inGameHud, context, teamObjective);
         context.pose().translate(0, teamScoreboardHeight);
     }
@@ -93,7 +94,7 @@ public abstract class HudMixin {
             context.pose().pushMatrix();
             //noinspection IntegerDivisionInFloatingPointContext
             context.pose().translate(0, Minecraft.getInstance().font.lineHeight -totalHeight/2);
-            context.pose().translate(0, MultiScoreboardClient.getSidebarScrollTranslation());
+            context.pose().translate(0, MultiScoreboardClient.getSidebarScrollTranslation() + MultiScoreboardClient.getScoreboardPositionYOffset(totalHeight));
         }
         while(sorted.hasNext()) {
             var renderable = sorted.next();
@@ -142,6 +143,28 @@ public abstract class HudMixin {
             SidebarObjectiveRenderable.CURRENT_MAX_WIDTH.set(maxWidth);
         }
         return maxWidth;
+    }
+
+    @ModifyVariable(
+            method = "displayScoreboardSidebar",
+            at = @At("STORE:FIRST"),
+            name = "left"
+    )
+    private int multiScoreboard$applyScoreboardPositionLeftX(int original, @Local(name = "biggestWidth") int maxWidth) {
+        if(!MultiScoreboardClient.useMultiScoreboard())
+            return original;
+        return MultiScoreboardClient.getScoreboardXPosition(maxWidth, 1, 2);
+    }
+
+    @ModifyVariable(
+            method = "displayScoreboardSidebar",
+            at = @At("STORE:FIRST"),
+            name = "right"
+    )
+    private int multiScoreboard$applyScoreboardPositionRightX(int original, @Local(name = "biggestWidth") int maxWidth) {
+        if(!MultiScoreboardClient.useMultiScoreboard())
+            return original;
+        return MultiScoreboardClient.getScoreboardXPosition(maxWidth, 1, 2) + maxWidth + 2;
     }
 
     @WrapOperation(
