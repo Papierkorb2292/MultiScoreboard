@@ -294,11 +294,11 @@ public class MultiScoreboardClient implements ClientModInitializer {
 
     public static int getScoreboardPositionYOffset(int scoreboardHeight) {
         return switch (MultiScoreboard.config.getScoreboardPosition()) {
-            // The same as max translation
-            case TOP_RIGHT, TOP_LEFT -> (scoreboardHeight - Minecraft.getInstance().getWindow().getGuiScaledHeight())/2 + maxTranslationBoundary;
+            // The same as max translation. Uses floorDiv and ceilDiv to avoid rounding errors when the scoreboard height is odd, which would lead to the scoreboard shifting by 1 pixel when a line is added/removed
+            case TOP_RIGHT, TOP_LEFT -> Math.floorDiv(scoreboardHeight - Minecraft.getInstance().getWindow().getGuiScaledHeight(),2) + maxTranslationBoundary;
             case CENTER_RIGHT, CENTER_LEFT -> 0;
             // Negative of max translation
-            case BOTTOM_RIGHT, BOTTOM_LEFT -> - (scoreboardHeight - Minecraft.getInstance().getWindow().getGuiScaledHeight())/2 - maxTranslationBoundary;
+            case BOTTOM_RIGHT, BOTTOM_LEFT -> -Math.ceilDiv((scoreboardHeight - Minecraft.getInstance().getWindow().getGuiScaledHeight()),2) - maxTranslationBoundary;
         };
     }
 
