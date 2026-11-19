@@ -43,6 +43,12 @@ Use the `Up` or `Down` arrow keys to scroll through the sidebar.
 If `Ctrl` is pressed, the next sidebar entry of the particular direction
 will be brought into view.
 
+### Config
+
+The mod has a config file located at `config/multiscoreboard.properties` in your Minecraft
+directory. It contains the following config option, which can also be accessed through Mod Menu:
+- `scoreboard-position`: The position of the scoreboard on the screen. Available options: `Bottom-Right`, `Center-Right`, `Top-Right`, `Bottom-Left`, `Center-Left`, `Top-Left`. Defaults to `Center-Right`
+
 ## Download
 
 You can download this mod on CurseForge (https://www.curseforge.com/minecraft/mc-mods/multiscoreboard),
